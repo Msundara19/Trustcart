@@ -1,6 +1,9 @@
 # main.py
 
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 from app.scraping.google_shopping import GoogleShoppingScraper
 from app.scraping.ebay import EbayScraper
 from app.models.fraud_detector import UniversalFraudDetector
@@ -11,9 +14,18 @@ from typing import List, Dict, Optional
 load_dotenv()
 
 app = FastAPI(
-    title="Universal Shopping Fraud Detector",
+    title="TrustCart - Universal Shopping Fraud Detector",
     description="AI-powered fraud detection for ANY product category across multiple platforms",
     version="2.0"
+)
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Initialize scrapers
@@ -53,30 +65,6 @@ def _summarize_filtered_reasons(invalid_products: List[Dict]) -> Dict:
         reason = product.get('invalid_reason', 'Unknown')
         reasons[reason] = reasons.get(reason, 0) + 1
     return reasons
-
-@app.get("/")
-async def root():
-    return {
-        "message": "Universal Shopping Fraud Detector API",
-        "version": "2.0",
-        "supported_platforms": ["google_shopping", "ebay"],
-        "features": [
-            "Multi-platform search (Google Shopping + eBay)",
-            "AI-powered fraud explanations (Groq LLM)",
-            "Works for ANY product category",
-            "Automatically filters toy versions of products",
-            "Universal fraud detection",
-            "Adaptive risk analysis",
-            "Smart recommendations"
-        ],
-        "examples": [
-            "/api/search/laptops under 100$",
-            "/api/search/laptops under 100$?platform=ebay",
-            "/api/search/cars?platform=ebay&max_price=1000&condition=used",
-            "/api/search/furniture under 500$?platform=all",
-            "/api/search/toy cars  (explicitly search for toys)"
-        ]
-    }
 
 @app.get("/api/search/{query}")
 async def search_products(
@@ -293,3 +281,15 @@ async def test_llm():
             "traceback": traceback.format_exc(),
             "hint": "Check the error details above"
         }
+
+# Mount static files and serve frontend
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.get("/")
+async def read_root():
+    """Serve the frontend HTML"""
+    return FileResponse('static/index.html')
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
