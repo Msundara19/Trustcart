@@ -2,7 +2,7 @@
 
 from typing import Dict, List
 from .product_classifier import UniversalProductClassifier
-from .llm_reasoner import LLMFraudExplainer  # Import from llm_reasoner.py
+from .llm_reasoner import LLMFraudExplainer
 import statistics
 
 class UniversalFraudDetector:
@@ -10,17 +10,13 @@ class UniversalFraudDetector:
     
     def __init__(self):
         self.classifier = UniversalProductClassifier()
-        self.llm_explainer = LLMFraudExplainer()  # Initialize LLM explainer
+        self.llm_explainer = LLMFraudExplainer()
         print(f"🔍 Fraud Detector initialized (LLM enabled: {self.llm_explainer.enabled})")
     
     def analyze_products(self, products: List[Dict], query: str = "") -> List[Dict]:
         """
         Analyze products for fraud with AI-powered explanations
-        
-        Steps:
-        1. Validate products (filter toys, spam, etc.)
-        2. Calculate risk scores
-        3. Generate AI explanations for risky products
+        OPTIMIZED: Only analyze top 5 risky products to keep response time under 5 seconds
         """
         
         print(f"\n🔍 Analyzing {len(products)} products...")
@@ -43,28 +39,41 @@ class UniversalFraudDetector:
             product['risk_factors'] = risk_factors
             product['risk_level'] = self._get_risk_level(risk_score)
         
-        # Count risk levels
-        high = sum(1 for p in valid_products if p.get('risk_level') == 'HIGH')
-        medium = sum(1 for p in valid_products if p.get('risk_level') == 'MEDIUM')
-        low = sum(1 for p in valid_products if p.get('risk_level') == 'LOW')
-        print(f"📊 Risk: HIGH={high}, MEDIUM={medium}, LOW={low}")
+        # Separate by risk level
+        high_risk = [p for p in valid_products if p.get('risk_level') == 'HIGH']
+        medium_risk = [p for p in valid_products if p.get('risk_level') == 'MEDIUM']
+        low_risk = [p for p in valid_products if p.get('risk_level') == 'LOW']
         
-        # Step 3: Add AI explanations (Groq LLM)
-        if valid_products and self.llm_explainer.enabled:
-            print(f"🤖 Generating AI explanations...")
+        print(f"📊 Risk: HIGH={len(high_risk)}, MEDIUM={len(medium_risk)}, LOW={len(low_risk)}")
+        
+        # Step 3: LLM analysis - ONLY top 5 risky products (3 HIGH + 2 MEDIUM)
+        products_to_analyze = high_risk[:3] + medium_risk[:2]
+        
+        if products_to_analyze and self.llm_explainer.enabled:
+            print(f"🤖 Generating AI explanations for {len(products_to_analyze)} products...")
             price_stats = self.get_price_statistics(valid_products)
-            valid_products = self.llm_explainer.batch_explain(valid_products, price_stats)
             
-            # Count how many got explanations
-            with_explanations = sum(1 for p in valid_products if 'fraud_analysis' in p)
-            print(f"✅ {with_explanations}/{len(valid_products)} products analyzed by AI")
+            for product in products_to_analyze:
+                analysis = self.llm_explainer.explain_risk(
+                    product=product,
+                    risk_level=product.get('risk_level'),
+                    risk_score=product.get('risk_score', 0),
+                    risk_factors=product.get('risk_factors', []),
+                    price_stats=price_stats
+                )
+                
+                if analysis:
+                    product['fraud_analysis'] = analysis
+                    product['risk_explanation'] = analysis.get('reasoning', '')
+            
+            print(f"✅ {len(products_to_analyze)} products analyzed by AI")
         elif not self.llm_explainer.enabled:
             print("⚠️ LLM disabled - skipping AI explanations")
         
         return products
     
     def _calculate_risk(self, product: Dict, all_products: List[Dict]) -> tuple:
-        """Calculate risk score and identify risk factors"""
+        """Calculate risk score and identify risk factors - FIXED THRESHOLDS"""
         risk_score = 0.0
         risk_factors = []
         
@@ -74,20 +83,22 @@ class UniversalFraudDetector:
         seller = product.get('seller', {})
         seller_rating = seller.get('rating', 0)
         
-        # Price analysis (compare to other products)
+        # Price analysis - FIXED: More aggressive thresholds
         if len(all_products) > 3:
             prices = [p.get('price', 0) for p in all_products if p.get('price', 0) > 0]
             if prices:
                 median_price = statistics.median(prices)
+                avg_price = statistics.mean(prices)
                 
-                if price < median_price * 0.3:
-                    risk_score += 0.4
-                    percent_below = int(((median_price - price) / median_price) * 100)
-                    risk_factors.append(f"Extremely cheap: {percent_below}% below median")
-                elif price < median_price * 0.5:
-                    risk_score += 0.25
-                    percent_below = int(((median_price - price) / median_price) * 100)
-                    risk_factors.append(f"Suspiciously low price: {percent_below}% below median")
+                # Use average for comparison (more stable than median for cars)
+                if price < avg_price * 0.5:  # Less than 50% of average
+                    risk_score += 0.5  # INCREASED from 0.4
+                    percent_below = int(((avg_price - price) / avg_price) * 100)
+                    risk_factors.append(f"Extremely cheap: {percent_below}% below market average")
+                elif price < avg_price * 0.7:  # 50-70% of average
+                    risk_score += 0.3  # INCREASED from 0.25
+                    percent_below = int(((avg_price - price) / avg_price) * 100)
+                    risk_factors.append(f"Price {percent_below}% below market average")
         
         # Rating analysis
         if rating == 0:
@@ -113,10 +124,10 @@ class UniversalFraudDetector:
         return min(risk_score, 1.0), risk_factors
     
     def _get_risk_level(self, risk_score: float) -> str:
-        """Convert risk score to level"""
-        if risk_score >= 0.6:
+        """Convert risk score to level - FIXED: Lower threshold for HIGH"""
+        if risk_score >= 0.55:  # CHANGED from 0.6 to 0.55
             return "HIGH"
-        elif risk_score >= 0.3:
+        elif risk_score >= 0.25:  # CHANGED from 0.3 to 0.25
             return "MEDIUM"
         else:
             return "LOW"
