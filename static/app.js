@@ -3,21 +3,26 @@ const API_BASE = window.location.origin;
 async function searchProducts() {
     const query = document.getElementById('searchQuery').value.trim();
     const platform = document.getElementById('platformSelect').value;
+    const numResults = document.getElementById('numResults').value;
+    const maxPrice = document.getElementById('maxPrice').value;
     
     if (!query) {
         alert('Please enter a product name');
         return;
     }
 
-    // Show loading state
+    // Show loading
     document.getElementById('emptyState').classList.add('hidden');
     document.getElementById('resultsSection').classList.add('hidden');
     document.getElementById('loadingState').classList.remove('hidden');
 
     try {
-        const url = platform === 'all' 
-            ? `${API_BASE}/api/search/${encodeURIComponent(query)}`
-            : `${API_BASE}/api/search/${encodeURIComponent(query)}?platform=${platform}`;
+        let url = `${API_BASE}/api/search/${encodeURIComponent(query)}?platform=${platform}&num_results=${numResults}`;
+        
+        // Add max_price if specified
+        if (maxPrice && maxPrice > 0) {
+            url += `&max_price=${maxPrice}`;
+        }
         
         const response = await fetch(url);
         const data = await response.json();
@@ -26,12 +31,20 @@ async function searchProducts() {
         document.getElementById('loadingState').classList.add('hidden');
         document.getElementById('resultsSection').classList.remove('hidden');
 
-        // Update results count
-        document.getElementById('resultsCount').textContent = 
-            `Found ${data.products.length} products with fraud analysis`;
+        // Show filtering info if any
+        let countText = `Found ${data.products ? data.products.length : 0} products`;
+        if (data.filtered_out && data.filtered_out > 0) {
+            countText += ` (${data.filtered_out} filtered out)`;
+        }
+        document.getElementById('resultsCount').textContent = countText;
 
         // Display results
-        displayResults(data.products);
+        if (data.products && data.products.length > 0) {
+            displayResults(data.products);
+        } else {
+            document.getElementById('resultsGrid').innerHTML = 
+                '<div class="col-span-full text-center py-8 text-gray-600">No products found</div>';
+        }
     } catch (error) {
         document.getElementById('loadingState').classList.add('hidden');
         alert('Error fetching results. Please try again.');
@@ -51,94 +64,82 @@ function displayResults(products) {
 
 function createProductCard(product) {
     const card = document.createElement('div');
-    card.className = 'bg-white rounded-lg shadow-md card-hover overflow-hidden';
+    card.className = 'bg-white rounded-lg shadow hover:shadow-lg transition-shadow border border-gray-200';
 
-    const riskLevel = product.fraud_analysis.scam_probability < 0.4 ? 'low' 
-                    : product.fraud_analysis.scam_probability < 0.7 ? 'medium' 
-                    : 'high';
-    
-    const riskClass = `risk-${riskLevel}`;
-    const riskText = riskLevel === 'low' ? 'Low Risk' 
-                   : riskLevel === 'medium' ? 'Medium Risk' 
-                   : 'High Risk';
-    
-    const riskIcon = riskLevel === 'low' ? 'fa-check-circle' 
-                   : riskLevel === 'medium' ? 'fa-exclamation-triangle' 
-                   : 'fa-times-circle';
+    // Get risk level from product
+    const riskLevel = product.risk_level || 'UNKNOWN';
+    const riskColors = {
+        'LOW': 'bg-green-50 border-green-200 text-green-800',
+        'MEDIUM': 'bg-yellow-50 border-yellow-200 text-yellow-800',
+        'HIGH': 'bg-red-50 border-red-200 text-red-800',
+        'UNKNOWN': 'bg-gray-50 border-gray-200 text-gray-800'
+    };
+
+    // Get fraud analysis
+    const fraudAnalysis = product.fraud_analysis || {};
+    const reasoning = fraudAnalysis.reasoning || 'No analysis available';
+    const redFlags = fraudAnalysis.red_flags || [];
+    const recommendation = fraudAnalysis.recommendation || 'REVIEW CAREFULLY';
+
+    // FIXED: Check multiple possible link fields
+    const productLink = product.link || product.product_link || '';
 
     card.innerHTML = `
-        <div class="${riskClass} p-4 text-white">
-            <div class="flex items-center justify-between">
-                <span class="font-semibold">
-                    <i class="fas ${riskIcon} mr-2"></i>${riskText}
-                </span>
-                <span class="text-2xl font-bold">${(product.fraud_analysis.scam_probability * 100).toFixed(0)}%</span>
-            </div>
-        </div>
-        
         <div class="p-4">
             ${product.thumbnail ? `
                 <img src="${product.thumbnail}" alt="${product.title}" 
                      class="w-full h-48 object-contain mb-4 bg-gray-50 rounded">
             ` : ''}
             
-            <h4 class="font-semibold text-gray-800 mb-2 line-clamp-2">${product.title}</h4>
-            
-            <div class="flex items-center justify-between mb-3">
-                <span class="text-2xl font-bold text-purple-600">$${product.price}</span>
-                <span class="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                    ${product.source}
+            <div class="mb-3">
+                <span class="inline-block px-3 py-1 rounded-full text-sm font-medium ${riskColors[riskLevel]}">
+                    ${riskLevel} RISK
                 </span>
             </div>
 
-            ${product.condition ? `
-                <div class="mb-3">
-                    <span class="text-sm text-gray-600">
-                        <i class="fas fa-info-circle mr-1"></i>
-                        Condition: <strong>${product.condition}</strong>
-                    </span>
-                </div>
-            ` : ''}
-
-            <div class="mb-3">
-                <p class="text-sm text-gray-600 font-semibold mb-2">
-                    <i class="fas fa-robot mr-1"></i>AI Analysis:
-                </p>
-                <p class="text-sm text-gray-700">${product.fraud_analysis.reasoning}</p>
+            <h3 class="font-semibold text-gray-900 mb-2 line-clamp-2 min-h-[3rem]">${product.title}</h3>
+            
+            <div class="flex items-baseline justify-between mb-3">
+                <span class="text-2xl font-bold text-blue-600">$${product.price}</span>
+                <span class="text-sm text-gray-500">${product.source || 'Unknown'}</span>
             </div>
 
-            ${product.fraud_analysis.red_flags.length > 0 ? `
+            ${product.condition ? `
+                <p class="text-sm text-gray-600 mb-3">Condition: <strong>${product.condition}</strong></p>
+            ` : ''}
+
+            <div class="mb-3 pb-3 border-b border-gray-200">
+                <p class="text-sm text-gray-700">${reasoning}</p>
+            </div>
+
+            ${redFlags.length > 0 ? `
                 <div class="mb-3">
-                    <p class="text-sm font-semibold text-red-600 mb-1">
-                        <i class="fas fa-flag mr-1"></i>Red Flags:
-                    </p>
+                    <p class="text-sm font-semibold text-red-600 mb-2">⚠️ Red Flags:</p>
                     <ul class="text-xs text-gray-600 space-y-1">
-                        ${product.fraud_analysis.red_flags.map(flag => 
-                            `<li><i class="fas fa-exclamation-circle text-red-500 mr-1"></i>${flag}</li>`
-                        ).join('')}
+                        ${redFlags.map(flag => `<li>• ${flag}</li>`).join('')}
                     </ul>
                 </div>
             ` : ''}
 
             <div class="pt-3 border-t border-gray-200">
-                <span class="text-sm font-semibold ${
-                    product.fraud_analysis.recommendation === 'SAFE TO BUY' ? 'text-green-600' :
-                    product.fraud_analysis.recommendation === 'PROCEED WITH CAUTION' ? 'text-yellow-600' :
+                <p class="text-sm font-semibold text-gray-700 mb-2">Recommendation:</p>
+                <p class="text-sm ${
+                    recommendation.includes('SAFE') ? 'text-green-600' :
+                    recommendation.includes('CAUTION') ? 'text-yellow-600' :
                     'text-red-600'
-                }">
-                    <i class="fas ${
-                        product.fraud_analysis.recommendation === 'SAFE TO BUY' ? 'fa-thumbs-up' :
-                        product.fraud_analysis.recommendation === 'PROCEED WITH CAUTION' ? 'fa-exclamation-triangle' :
-                        'fa-ban'
-                    } mr-1"></i>
-                    ${product.fraud_analysis.recommendation}
-                </span>
+                }">${recommendation}</p>
             </div>
 
-            <a href="${product.link}" target="_blank" 
-               class="mt-3 block w-full text-center bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded transition-colors">
-                View on ${product.source} <i class="fas fa-external-link-alt ml-1 text-sm"></i>
-            </a>
+            ${productLink ? `
+                <a href="${productLink}" target="_blank" 
+                   class="mt-4 block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition-colors">
+                    View Listing →
+                </a>
+            ` : `
+                <div class="mt-4 block w-full text-center bg-gray-300 text-gray-600 font-medium py-2 px-4 rounded cursor-not-allowed">
+                    Link Not Available
+                </div>
+            `}
         </div>
     `;
 
