@@ -106,7 +106,7 @@ class UniversalFraudDetector:
             }
     
     def _calculate_risk(self, product: Dict, all_products: List[Dict]) -> tuple:
-        """Calculate risk score and identify risk factors - FIXED THRESHOLDS"""
+        """Calculate risk score with seller reputation consideration"""
         risk_score = 0.0
         risk_factors = []
         
@@ -114,45 +114,54 @@ class UniversalFraudDetector:
         rating = product.get('rating', 0)
         reviews = product.get('reviews', 0)
         seller = product.get('seller', {})
-        seller_rating = seller.get('rating', 0)
+        seller_name = seller.get('name', '').lower()
+        source = product.get('source', '').lower()
+        platform = product.get('platform', '').lower()
         
-        # Price analysis - FIXED: More aggressive thresholds
+        # TRUSTED SELLERS - Major retailers get risk reduction
+        trusted_sellers = ['target', 'walmart', 'best buy', 'amazon', 'ulta', 'kohl', 
+                        'dyson', 'macy', 'laifen', 'ikea', 'west elm', 'crate & barrel']
+        
+        is_trusted = any(trusted in seller_name or trusted in source 
+                        for trusted in trusted_sellers)
+        
+        # Price analysis - ADJUSTED for trusted sellers
         if len(all_products) > 3:
             prices = [p.get('price', 0) for p in all_products if p.get('price', 0) > 0]
             if prices:
-                median_price = statistics.median(prices)
                 avg_price = statistics.mean(prices)
                 
-                # Use average for comparison (more stable than median for cars)
-                if price < avg_price * 0.5:  # Less than 50% of average
-                    risk_score += 0.5
-                    percent_below = int(((avg_price - price) / avg_price) * 100)
-                    risk_factors.append(f"Extremely cheap: {percent_below}% below market average")
-                elif price < avg_price * 0.7:  # 50-70% of average
-                    risk_score += 0.3
-                    percent_below = int(((avg_price - price) / avg_price) * 100)
-                    risk_factors.append(f"Price {percent_below}% below market average")
+                if price < avg_price * 0.5:
+                    if is_trusted and platform == 'google_shopping':
+                        # Trusted retailer with low price = Clearance/sale, not scam
+                        risk_score += 0.1  # Much lower risk
+                        risk_factors.append(f"Low price (possible clearance sale)")
+                    else:
+                        # Unknown seller with low price = Suspicious
+                        risk_score += 0.5
+                        percent_below = int(((avg_price - price) / avg_price) * 100)
+                        risk_factors.append(f"Extremely cheap: {percent_below}% below market average")
+                        
+                elif price < avg_price * 0.7:
+                    if is_trusted:
+                        risk_score += 0.05  # Very low risk for trusted sellers
+                    else:
+                        risk_score += 0.3
+                        percent_below = int(((avg_price - price) / avg_price) * 100)
+                        risk_factors.append(f"Price {percent_below}% below market average")
         
-        # Rating analysis
-        if rating == 0:
+        # Rating/reviews - LESS impact for trusted retailers
+        if rating == 0 and not is_trusted:
             risk_score += 0.15
             risk_factors.append("No rating available")
-        elif rating < 3.0:
-            risk_score += 0.25
-            risk_factors.append(f"Low rating: {rating}/5")
-        
-        # Reviews analysis
-        if reviews == 0:
+        elif rating == 0 and is_trusted:
+            risk_score += 0.05  # Minimal impact for known stores
+            
+        if reviews == 0 and not is_trusted:
             risk_score += 0.15
             risk_factors.append("Very few reviews (0)")
-        elif reviews < 5:
-            risk_score += 0.1
-            risk_factors.append(f"Few reviews ({reviews})")
-        
-        # Seller analysis
-        if seller_rating > 0 and seller_rating < 3.0:
-            risk_score += 0.2
-            risk_factors.append(f"Low seller rating: {seller_rating}/5")
+        elif reviews == 0 and is_trusted:
+            risk_score += 0.05  # Minimal impact for known stores
         
         return min(risk_score, 1.0), risk_factors
     
