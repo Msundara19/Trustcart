@@ -1,9 +1,10 @@
 # app/models/fraud_detector.py
 
-from typing import Dict, List
+from typing import Dict, List, Tuple, Optional
 from .product_classifier import UniversalProductClassifier
 from .llm_reasoner import LLMFraudExplainer
 import statistics
+import numpy as np
 
 class UniversalFraudDetector:
     """Universal fraud detection with Groq-powered AI explanations"""
@@ -77,6 +78,174 @@ class UniversalFraudDetector:
         
         return products
     
+    def _calculate_risk(self, product: Dict, all_products: List[Dict]) -> Tuple[float, List[str]]:
+        """
+        Calculate risk score with percentile-based price tier classification
+        ROBUST: Uses median and removes outliers for accurate assessment
+        """
+        risk_score = 0.0
+        risk_factors = []
+        
+        price = product.get('price', 0)
+        rating = product.get('rating', 0)
+        reviews = product.get('reviews', 0)
+        
+        # Get seller trust info
+        seller = product.get('seller', {})
+        seller_name = seller.get('name', '').lower()
+        source = product.get('source', '').lower()
+        platform = product.get('platform', '').lower()
+        
+        # Trusted sellers list (major retailers)
+        trusted_sellers = [
+            'target', 'walmart', 'best buy', 'amazon', 'ulta', 'kohl',
+            'barnes & noble', 'books a million', 'abebooks', 'dyson',
+            'ikea', 'macy', 'west elm', 'crate & barrel', 'wayfair'
+        ]
+        
+        is_trusted = any(trusted in seller_name or trusted in source 
+                        for trusted in trusted_sellers)
+        
+        # Price analysis with percentiles (ROBUST TO OUTLIERS)
+        if len(all_products) >= 5:  # Need minimum 5 products for meaningful analysis
+            price_tier_info = self._classify_price_tier(price, all_products)
+            
+            # Add tier info to product for debugging
+            product['price_tier'] = price_tier_info['tier']
+            product['price_percentile'] = price_tier_info['percentile']
+            
+            # Risk assessment based on tier
+            if price_tier_info['is_outlier_high']:
+                # Extremely high-priced item (>10x median)
+                risk_score += 0.15
+                risk_factors.append("High-value or rare item - verify authenticity carefully")
+                
+            elif price_tier_info['tier'] == 'extremely_cheap':
+                # Bottom 10% - SUSPICIOUS unless trusted seller
+                if is_trusted and platform == 'google_shopping':
+                    risk_score += 0.1
+                    risk_factors.append("Significantly below typical price (possible clearance)")
+                else:
+                    risk_score += 0.5
+                    percent_below = int(((price_tier_info['median'] - price) / price_tier_info['median']) * 100)
+                    risk_factors.append(f"Extremely cheap: {percent_below}% below typical price")
+                    
+            elif price_tier_info['tier'] == 'budget':
+                # 10-25th percentile
+                if is_trusted:
+                    risk_score += 0.0  # No risk for trusted sellers
+                else:
+                    risk_score += 0.2
+                    risk_factors.append("Lower-priced option - verify condition and seller")
+                    
+            elif price_tier_info['tier'] == 'mid':
+                # 25-75th percentile - Normal pricing
+                risk_score += 0.0
+                
+            elif price_tier_info['tier'] in ['premium', 'luxury']:
+                # 75%+ - High value items
+                if not is_trusted and reviews == 0:
+                    risk_score += 0.2
+                    risk_factors.append("High-value item from seller with no reviews")
+        
+        # Rating analysis
+        if rating == 0:
+            if is_trusted:
+                risk_score += 0.05  # Minimal impact for known stores
+            else:
+                risk_score += 0.15
+                risk_factors.append("No rating available")
+        elif rating < 3.0:
+            risk_score += 0.25
+            risk_factors.append(f"Low rating: {rating}/5")
+        
+        # Reviews analysis
+        if reviews == 0:
+            if is_trusted:
+                risk_score += 0.05  # Minimal impact for known stores
+            else:
+                risk_score += 0.15
+                risk_factors.append("Very few reviews (0)")
+        elif reviews < 5:
+            risk_score += 0.1
+            risk_factors.append(f"Few reviews ({reviews})")
+        
+        # Seller rating analysis
+        seller_rating = seller.get('rating', 0)
+        if seller_rating > 0 and seller_rating < 3.0:
+            risk_score += 0.2
+            risk_factors.append(f"Low seller rating: {seller_rating}/5")
+        
+        return min(risk_score, 1.0), risk_factors
+    
+    def _classify_price_tier(self, price: float, all_products: List[Dict]) -> Dict:
+        """
+        Classify price into tier using percentiles (ROBUST to outliers)
+        
+        Returns:
+        {
+            'tier': 'extremely_cheap/budget/mid/premium/luxury',
+            'percentile': 45.5,
+            'is_outlier_high': False,
+            'median': 100.0
+        }
+        """
+        # Extract all prices
+        prices = [p.get('price', 0) for p in all_products if p.get('price', 0) > 0]
+        
+        if len(prices) < 3:
+            return {
+                'tier': 'unknown',
+                'percentile': 50,
+                'is_outlier_high': False,
+                'median': 0
+            }
+        
+        # Step 1: Calculate initial median
+        median_price = float(np.median(prices))
+        
+        # Step 2: Check if product is extreme outlier (>10x median)
+        if price > median_price * 10:
+            return {
+                'tier': 'outlier_high',
+                'percentile': 100,
+                'is_outlier_high': True,
+                'median': median_price
+            }
+        
+        # Step 3: Filter extreme outliers from comparison (>10x median)
+        filtered_prices = [p for p in prices if p <= median_price * 10]
+        
+        if len(filtered_prices) < 3:
+            filtered_prices = prices  # Fallback
+        
+        # Step 4: Recalculate with clean data
+        clean_median = float(np.median(filtered_prices))
+        
+        # Step 5: Calculate percentile of this product
+        sorted_prices = sorted(filtered_prices)
+        rank = sum(1 for p in sorted_prices if p <= price)
+        percentile = (rank / len(sorted_prices)) * 100
+        
+        # Step 6: Classify into tier based on percentile
+        if percentile <= 10:
+            tier = 'extremely_cheap'
+        elif percentile <= 25:
+            tier = 'budget'
+        elif percentile <= 75:
+            tier = 'mid'
+        elif percentile <= 90:
+            tier = 'premium'
+        else:
+            tier = 'luxury'
+        
+        return {
+            'tier': tier,
+            'percentile': round(percentile, 1),
+            'is_outlier_high': False,
+            'median': clean_median
+        }
+    
     def _get_default_analysis(self, product: Dict) -> Dict:
         """Generate default fraud analysis for products not analyzed by LLM"""
         risk_level = product.get('risk_level', 'UNKNOWN')
@@ -105,68 +274,8 @@ class UniversalFraudDetector:
                 "recommendation": "AVOID"
             }
     
-    def _calculate_risk(self, product: Dict, all_products: List[Dict]) -> tuple:
-        """Calculate risk score with seller reputation consideration"""
-        risk_score = 0.0
-        risk_factors = []
-        
-        price = product.get('price', 0)
-        rating = product.get('rating', 0)
-        reviews = product.get('reviews', 0)
-        seller = product.get('seller', {})
-        seller_name = seller.get('name', '').lower()
-        source = product.get('source', '').lower()
-        platform = product.get('platform', '').lower()
-        
-        # TRUSTED SELLERS - Major retailers get risk reduction
-        trusted_sellers = ['target', 'walmart', 'best buy', 'amazon', 'ulta', 'kohl', 
-                        'dyson', 'macy', 'laifen', 'ikea', 'west elm', 'crate & barrel']
-        
-        is_trusted = any(trusted in seller_name or trusted in source 
-                        for trusted in trusted_sellers)
-        
-        # Price analysis - ADJUSTED for trusted sellers
-        if len(all_products) > 3:
-            prices = [p.get('price', 0) for p in all_products if p.get('price', 0) > 0]
-            if prices:
-                avg_price = statistics.mean(prices)
-                
-                if price < avg_price * 0.5:
-                    if is_trusted and platform == 'google_shopping':
-                        # Trusted retailer with low price = Clearance/sale, not scam
-                        risk_score += 0.1  # Much lower risk
-                        risk_factors.append(f"Low price (possible clearance sale)")
-                    else:
-                        # Unknown seller with low price = Suspicious
-                        risk_score += 0.5
-                        percent_below = int(((avg_price - price) / avg_price) * 100)
-                        risk_factors.append(f"Extremely cheap: {percent_below}% below market average")
-                        
-                elif price < avg_price * 0.7:
-                    if is_trusted:
-                        risk_score += 0.05  # Very low risk for trusted sellers
-                    else:
-                        risk_score += 0.3
-                        percent_below = int(((avg_price - price) / avg_price) * 100)
-                        risk_factors.append(f"Price {percent_below}% below market average")
-        
-        # Rating/reviews - LESS impact for trusted retailers
-        if rating == 0 and not is_trusted:
-            risk_score += 0.15
-            risk_factors.append("No rating available")
-        elif rating == 0 and is_trusted:
-            risk_score += 0.05  # Minimal impact for known stores
-            
-        if reviews == 0 and not is_trusted:
-            risk_score += 0.15
-            risk_factors.append("Very few reviews (0)")
-        elif reviews == 0 and is_trusted:
-            risk_score += 0.05  # Minimal impact for known stores
-        
-        return min(risk_score, 1.0), risk_factors
-    
     def _get_risk_level(self, risk_score: float) -> str:
-        """Convert risk score to level - FIXED: Lower threshold for HIGH"""
+        """Convert risk score to level"""
         if risk_score >= 0.55:
             return "HIGH"
         elif risk_score >= 0.25:
@@ -175,20 +284,27 @@ class UniversalFraudDetector:
             return "LOW"
     
     def get_price_statistics(self, products: List[Dict]) -> Dict:
-        """Calculate price statistics for context"""
+        """Calculate price statistics for context (with outlier handling)"""
         prices = [p.get('price', 0) for p in products if p.get('price', 0) > 0]
         
         if not prices:
             return {}
         
+        # Remove extreme outliers for statistics
+        median = np.median(prices)
+        filtered_prices = [p for p in prices if p <= median * 10]
+        
+        if len(filtered_prices) < 2:
+            filtered_prices = prices
+        
         return {
             "count": len(prices),
-            "min": min(prices),
-            "max": max(prices),
-            "average": statistics.mean(prices),
-            "median": statistics.median(prices),
-            "std_dev": statistics.stdev(prices) if len(prices) > 1 else 0,
-            "range": max(prices) - min(prices)
+            "min": min(filtered_prices),
+            "max": max(filtered_prices),
+            "average": float(np.mean(filtered_prices)),
+            "median": float(np.median(filtered_prices)),
+            "std_dev": float(np.std(filtered_prices)) if len(filtered_prices) > 1 else 0,
+            "range": max(filtered_prices) - min(filtered_prices)
         }
     
     def get_smart_recommendations(self, products: List[Dict]) -> Dict:
