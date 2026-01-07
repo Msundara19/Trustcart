@@ -70,7 +70,40 @@ class UniversalFraudDetector:
         elif not self.llm_explainer.enabled:
             print("⚠️ LLM disabled - skipping AI explanations")
         
+        # Step 4: Add default fraud analysis for products WITHOUT LLM analysis
+        for product in valid_products:
+            if 'fraud_analysis' not in product:
+                product['fraud_analysis'] = self._get_default_analysis(product)
+        
         return products
+    
+    def _get_default_analysis(self, product: Dict) -> Dict:
+        """Generate default fraud analysis for products not analyzed by LLM"""
+        risk_level = product.get('risk_level', 'UNKNOWN')
+        risk_score = product.get('risk_score', 0)
+        risk_factors = product.get('risk_factors', [])
+        
+        if risk_level == 'LOW':
+            return {
+                "scam_probability": risk_score,
+                "red_flags": [],
+                "reasoning": "This listing appears legitimate with reasonable pricing and good seller reputation.",
+                "recommendation": "SAFE TO BUY"
+            }
+        elif risk_level == 'MEDIUM':
+            return {
+                "scam_probability": risk_score,
+                "red_flags": risk_factors,
+                "reasoning": "This listing has some minor concerns. Verify seller details before purchasing.",
+                "recommendation": "PROCEED WITH CAUTION"
+            }
+        else:  # HIGH
+            return {
+                "scam_probability": risk_score,
+                "red_flags": risk_factors,
+                "reasoning": "This listing shows multiple warning signs. Exercise extreme caution or avoid.",
+                "recommendation": "AVOID"
+            }
     
     def _calculate_risk(self, product: Dict, all_products: List[Dict]) -> tuple:
         """Calculate risk score and identify risk factors - FIXED THRESHOLDS"""
@@ -92,11 +125,11 @@ class UniversalFraudDetector:
                 
                 # Use average for comparison (more stable than median for cars)
                 if price < avg_price * 0.5:  # Less than 50% of average
-                    risk_score += 0.5  # INCREASED from 0.4
+                    risk_score += 0.5
                     percent_below = int(((avg_price - price) / avg_price) * 100)
                     risk_factors.append(f"Extremely cheap: {percent_below}% below market average")
                 elif price < avg_price * 0.7:  # 50-70% of average
-                    risk_score += 0.3  # INCREASED from 0.25
+                    risk_score += 0.3
                     percent_below = int(((avg_price - price) / avg_price) * 100)
                     risk_factors.append(f"Price {percent_below}% below market average")
         
@@ -125,9 +158,9 @@ class UniversalFraudDetector:
     
     def _get_risk_level(self, risk_score: float) -> str:
         """Convert risk score to level - FIXED: Lower threshold for HIGH"""
-        if risk_score >= 0.55:  # CHANGED from 0.6 to 0.55
+        if risk_score >= 0.55:
             return "HIGH"
-        elif risk_score >= 0.25:  # CHANGED from 0.3 to 0.25
+        elif risk_score >= 0.25:
             return "MEDIUM"
         else:
             return "LOW"
