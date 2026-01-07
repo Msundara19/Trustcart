@@ -37,7 +37,6 @@ def _generate_category_warning(query: str, valid_products: List[Dict], invalid_p
     """Generate warnings about filtered products and search limitations"""
     warnings = []
     
-    # Check if many products were filtered as toys
     if invalid_products:
         toy_products = [p for p in invalid_products if 'toy' in p.get('invalid_reason', '').lower()]
         if len(toy_products) > 0:
@@ -46,10 +45,8 @@ def _generate_category_warning(query: str, valid_products: List[Dict], invalid_p
                 f"To search for toys specifically, include 'toy' or 'kids' in your query."
             )
     
-    # Category-specific warnings
     query_lower = query.lower()
     
-    # Cars warning
     if any(word in query_lower for word in ['car', 'cars', 'vehicle', 'auto']):
         if invalid_products and len([p for p in invalid_products if 'toy' in p.get('invalid_reason', '').lower()]) > 0:
             warnings.append(
@@ -78,25 +75,24 @@ async def search_products(
 ):
     """
     Universal product search with AI-powered fraud detection
-    
-    Parameters:
-    - query: Search query
-    - num_results: Number of results per platform (1-50)
-    - platform: "google" (default), "ebay", or "all"
-    - max_price: Maximum price filter (eBay only)
-    - condition: "new", "used", or "refurbished" (eBay only)
-    - analyze_fraud: Enable fraud detection
-    - filter_invalid: Remove invalid products
     """
     
     try:
         all_products = []
         platforms_searched = []
         
-        # Search Google Shopping
+        # Search Google Shopping (NOW with max_price support)
         if platform in ["google", "all"]:
             try:
-                google_products = google_scraper.search(query=query, num_results=num_results)
+                google_kwargs = {}
+                if max_price:
+                    google_kwargs['max_price'] = max_price
+                
+                google_products = google_scraper.search(
+                    query=query, 
+                    num_results=num_results,
+                    **google_kwargs
+                )
                 all_products.extend(google_products)
                 platforms_searched.append("google_shopping")
             except Exception as e:
@@ -129,7 +125,7 @@ async def search_products(
                 "message": "No products found"
             }
         
-        # Analyze for fraud (includes LLM explanations)
+        # Analyze for fraud
         if analyze_fraud:
             all_products = fraud_detector.analyze_products(all_products, query)
         
@@ -141,7 +137,6 @@ async def search_products(
             valid_products = all_products
             invalid_products = []
         
-        # Generate category warning
         category_warning = _generate_category_warning(query, valid_products, invalid_products)
         
         # Calculate statistics
@@ -158,7 +153,6 @@ async def search_products(
             high_risk, medium_risk, low_risk = [], [], []
             recommendations = {}
         
-        # Return results
         return {
             "query": query,
             "platforms_searched": platforms_searched,
@@ -186,7 +180,6 @@ async def search_products(
 
 @app.get("/api/platforms")
 async def get_supported_platforms():
-    """Get list of supported platforms and their features"""
     return {
         "platforms": {
             "google_shopping": {
@@ -209,7 +202,6 @@ async def get_supported_platforms():
 
 @app.get("/api/health")
 async def health_check():
-    """Health check endpoint"""
     return {
         "status": "healthy",
         "version": "2.0",
@@ -221,26 +213,19 @@ async def health_check():
 
 @app.get("/api/test-llm")
 async def test_llm():
-    """Test if Groq LLM is working"""
-    
-    # Check if LLM explainer exists
     if not hasattr(fraud_detector, 'llm_explainer'):
         return {
             "status": "error",
-            "error": "llm_explainer not found in fraud_detector",
-            "hint": "Check if fraud_detector.py initializes self.llm_explainer"
+            "error": "llm_explainer not found in fraud_detector"
         }
     
-    # Check if LLM is enabled
     if not fraud_detector.llm_explainer.enabled:
         return {
             "status": "disabled",
             "error": "LLM is disabled",
-            "groq_key_set": bool(os.getenv("GROQ_API_KEY")),
-            "hint": "Add GROQ_API_KEY to your .env file"
+            "groq_key_set": bool(os.getenv("GROQ_API_KEY"))
         }
     
-    # Try a simple test
     try:
         test_product = {
             "title": "iPhone 13 Pro - AMAZING DEAL!!!",
@@ -269,8 +254,7 @@ async def test_llm():
         else:
             return {
                 "status": "error",
-                "error": "LLM returned None",
-                "hint": "Check Groq API key or rate limits"
+                "error": "LLM returned None"
             }
     
     except Exception as e:
@@ -278,16 +262,13 @@ async def test_llm():
         return {
             "status": "error",
             "error": str(e),
-            "traceback": traceback.format_exc(),
-            "hint": "Check the error details above"
+            "traceback": traceback.format_exc()
         }
 
-# Mount static files and serve frontend
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/")
 async def read_root():
-    """Serve the frontend HTML"""
     return FileResponse('static/index.html')
 
 if __name__ == "__main__":

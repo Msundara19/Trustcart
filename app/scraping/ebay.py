@@ -77,25 +77,28 @@ class EbayScraper(BaseScraper):
     def parse_product(self, raw_data: Dict) -> Dict:
         """Parse eBay result into standard format"""
         try:
-            # eBay specific parsing
             price_info = raw_data.get("price", {})
             price_raw = price_info.get("raw", "") if isinstance(price_info, dict) else str(price_info)
             
             detected_condition = self._detect_condition(raw_data)
+            
+            # Ensure link is always present
+            product_link = raw_data.get("link", "")
             
             return {
                 "title": raw_data.get("title", ""),
                 "price": self.normalize_price(price_raw),
                 "price_raw": price_raw,
                 "source": "eBay",
-                "link": raw_data.get("link", ""),
-                "product_link": raw_data.get("link", ""),
+                "link": product_link,  # Make sure link is here
+                "product_link": product_link,
                 "thumbnail": raw_data.get("thumbnail", ""),
                 "rating": 0,
                 "reviews": 0,
                 "seller": {
                     "name": raw_data.get("seller", {}).get("name", "eBay Seller"),
-                    "rating": raw_data.get("seller", {}).get("rating", 0)
+                    "rating": raw_data.get("seller", {}).get("rating", 0),
+                    "link": product_link
                 },
                 "delivery": raw_data.get("shipping", ""),
                 "extracted_price": self.normalize_price(price_raw),

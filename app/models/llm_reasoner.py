@@ -1,11 +1,10 @@
-# app/models/llm_explainer.py
+# app/models/llm_reasoner.py
 
 from groq import Groq
 import os
 from typing import Dict, List, Optional
 import json
 import hashlib
-from functools import lru_cache
 
 class LLMFraudExplainer:
     """
@@ -13,12 +12,6 @@ class LLMFraudExplainer:
     
     Free tier: 14,400 requests/day
     Models: llama-3.1-8b-instant (use 70b for complex cases)
-    
-    Optimization strategies:
-    - Structured JSON outputs
-    - Caching for identical products
-    - Smart model selection (8B vs 70B)
-    - Batch processing support
     """
     
     def __init__(self, api_key: str = None):
@@ -33,10 +26,10 @@ class LLMFraudExplainer:
             self.client = Groq(api_key=self.api_key)
         
         # Model selection
-        self.fast_model = "llama-3.1-8b-instant"  # 300+ tokens/sec
-        self.smart_model = "llama-3.1-70b-versatile"  # Use for complex cases
+        self.fast_model = "llama-3.1-8b-instant"
+        self.smart_model = "llama-3.1-70b-versatile"
         
-        # Cache for identical products (avoid redundant API calls)
+        # Cache for identical products
         self._cache = {}
     
     def explain_risk(
@@ -77,7 +70,7 @@ class LLMFraudExplainer:
                 price_stats=price_stats
             )
             
-            # Select model based on complexity
+            # Select model
             model = self.smart_model if use_smart_model else self.fast_model
             
             # Call Groq with structured output
@@ -93,9 +86,9 @@ class LLMFraudExplainer:
                         "content": prompt
                     }
                 ],
-                temperature=0.3,  # Lower = more consistent
+                temperature=0.3,
                 max_tokens=200,
-                response_format={"type": "json_object"}  # Force JSON output
+                response_format={"type": "json_object"}
             )
             
             # Parse response
@@ -118,12 +111,6 @@ class LLMFraudExplainer:
     ) -> List[Dict]:
         """
         Efficiently process multiple products
-        
-        Strategy:
-        - Only analyze HIGH/MEDIUM risk products
-        - Use 8B model for most cases
-        - Escalate to 70B only if 8B shows uncertainty
-        - Process in batches to respect rate limits
         """
         if not self.enabled:
             return products
@@ -138,7 +125,6 @@ class LLMFraudExplainer:
             risk_score = product.get('risk_score', 0)
             risk_factors = product.get('risk_factors', [])
             
-            # First pass: Use fast 8B model
             analysis = self.explain_risk(
                 product=product,
                 risk_level=risk_level,
@@ -149,50 +135,41 @@ class LLMFraudExplainer:
             )
             
             if analysis:
-                # Add to product
                 product['fraud_analysis'] = analysis
                 product['risk_explanation'] = analysis.get('reasoning', '')
-                
-                # If 8B is uncertain (scam_probability near 0.5), escalate to 70B
-                scam_prob = analysis.get('scam_probability', 0)
-                if 0.4 <= scam_prob <= 0.6 and risk_level == 'HIGH':
-                    # Re-analyze with smarter model
-                    smart_analysis = self.explain_risk(
-                        product=product,
-                        risk_level=risk_level,
-                        risk_score=risk_score,
-                        risk_factors=risk_factors,
-                        price_stats=price_stats,
-                        use_smart_model=True
-                    )
-                    if smart_analysis:
-                        product['fraud_analysis'] = smart_analysis
-                        product['risk_explanation'] = smart_analysis.get('reasoning', '')
         
         return products
     
     def _get_system_prompt(self) -> str:
-        """Optimized system prompt focusing on specific scam indicators"""
-        return """You are an expert fraud detection system analyzing online shopping listings.
+        """Improved system prompt with clear risk thresholds"""
+        return """You are an expert fraud detection system for online shopping.
 
-Focus on these scam indicators:
-- Unrealistic pricing (too cheap)
-- Fake/missing reviews
-- Poor grammar or exaggerated claims ("AMAZING DEAL!!!")
-- Suspicious seller patterns (no rating, new account)
-- Stock photos vs real product photos
-- Vague product descriptions
-- Suspicious payment methods mentions
+RISK CALIBRATION GUIDELINES:
+- HIGH RISK (0.7-1.0): Multiple major red flags present
+  * Price 50%+ below market AND no reviews
+  * Obvious scam language ("AMAZING DEAL!!!")
+  * New seller + unrealistic pricing
+  * Parts/broken items listed as working
+  
+- MEDIUM RISK (0.4-0.69): Some concerning factors
+  * Price 30-50% below market OR few reviews
+  * Minor seller concerns
+  * Slightly suspicious but could be legitimate
+  
+- LOW RISK (0.0-0.39): Minimal concerns
+  * Price reasonable (within 30% of market)
+  * Good seller rating OR established platform
+  * Normal product description
 
-Return analysis as JSON with these exact fields:
+IMPORTANT: Be strict about HIGH risk. Only assign 0.7+ when multiple serious red flags exist.
+
+Return JSON with exact fields:
 {
   "scam_probability": <float 0.0-1.0>,
-  "red_flags": [<list of specific red flags found>],
-  "reasoning": "<2-3 sentence explanation>",
-  "recommendation": "<AVOID/CAUTION/SAFE>"
-}
-
-Be specific, concise, and actionable."""
+  "red_flags": [<specific red flags found>],
+  "reasoning": "<2-3 sentences explaining the probability>",
+  "recommendation": "AVOID" | "PROCEED WITH CAUTION" | "SAFE TO BUY"
+}"""
     
     def _build_structured_prompt(
         self,
@@ -209,6 +186,7 @@ Be specific, concise, and actionable."""
         platform = product.get('platform', 'unknown')
         rating = product.get('rating', 0)
         reviews = product.get('reviews', 0)
+        condition = product.get('condition', 'unknown')
         
         # Calculate price deviation
         price_context = ""
@@ -221,25 +199,25 @@ Be specific, concise, and actionable."""
                 else:
                     price_context = f"Price is {abs(deviation)}% above market average (${avg:.2f})"
         
-        prompt = f"""Analyze this product listing for fraud:
+        prompt = f"""Analyze this listing for fraud:
 
 PRODUCT: {title}
 PRICE: ${price}
+CONDITION: {condition}
 PLATFORM: {platform}
 RATING: {rating}/5 ({reviews} reviews)
-RISK LEVEL: {risk_level}
+PRELIMINARY RISK: {risk_level} (score: {risk_score:.2f})
 {price_context}
 
 DETECTED RISK FACTORS:
 {chr(10).join(f"- {factor}" for factor in risk_factors)}
 
-Analyze and return JSON with scam_probability, red_flags, reasoning, and recommendation."""
+Based on these factors, assign a calibrated scam_probability (0.0-1.0), list specific red_flags, provide reasoning, and give a recommendation."""
         
         return prompt
     
     def _get_cache_key(self, product: Dict, risk_level: str) -> str:
         """Generate cache key for identical products"""
-        # Use title + price + platform as unique identifier
         unique_str = f"{product.get('title', '')}{product.get('price', 0)}{risk_level}"
         return hashlib.md5(unique_str.encode()).hexdigest()
     
