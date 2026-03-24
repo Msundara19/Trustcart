@@ -41,3 +41,5 @@ data/raw_scraped.json
 data/validation_dataset.json
 data/labeling_summary.json
 data/evaluation_results.json
+data/fraud_model.pkl
+data/training_results.json

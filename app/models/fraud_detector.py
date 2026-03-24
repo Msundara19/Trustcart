@@ -3,15 +3,17 @@
 from typing import Dict, List, Tuple, Optional
 from .product_classifier import UniversalProductClassifier
 from .llm_reasoner import LLMFraudExplainer
+from .xgb_model import XGBFraudClassifier
 import numpy as np
 
 class UniversalFraudDetector:
     """Universal fraud detection with Groq-powered AI explanations"""
     
     def __init__(self):
-        self.classifier = UniversalProductClassifier()
-        self.llm_explainer = LLMFraudExplainer()
-        print(f"🔍 Fraud Detector initialized (LLM enabled: {self.llm_explainer.enabled})")
+        self.classifier     = UniversalProductClassifier()
+        self.llm_explainer  = LLMFraudExplainer()
+        self.xgb_classifier = XGBFraudClassifier()
+        print(f"🔍 Fraud Detector initialized (LLM enabled: {self.llm_explainer.enabled}, XGBoost enabled: {self.xgb_classifier.enabled})")
     
     def analyze_products(self, products: List[Dict], query: str = "") -> List[Dict]:
         """
@@ -38,6 +40,13 @@ class UniversalFraudDetector:
             product['risk_score'] = risk_score
             product['risk_factors'] = risk_factors
             product['risk_level'] = self._get_risk_level(risk_score)
+
+        # XGBoost scoring (when model is available, adds xgb_score alongside rule-based)
+        if self.xgb_classifier.enabled:
+            xgb_scores = self.xgb_classifier.predict_batch(valid_products)
+            for product, xgb_score in zip(valid_products, xgb_scores):
+                product['xgb_score'] = round(xgb_score, 4)
+                product['xgb_risk_level'] = self._get_risk_level(xgb_score)
         
         # Separate by risk level
         high_risk = [p for p in valid_products if p.get('risk_level') == 'HIGH']
