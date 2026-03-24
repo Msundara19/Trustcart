@@ -94,21 +94,25 @@ def label(max_products: int = 1000):
         product["rule_label"]    = rule
         product["llm_label"]     = llm
         product["labels_agree"]  = (llm == rule)
-        product["true_label"]    = rule if (llm == rule) else None
+        # LLM is ground truth — it has semantic context the rule system lacks.
+        # Rule label is kept for analysis but does not gate inclusion.
+        product["true_label"]    = llm if llm is not None else rule
         labeled.append(product)
 
         if llm == rule:
             agreements += 1
 
+    # Full dataset: all products with a valid LLM label
     validation = [p for p in labeled if p["true_label"] is not None]
     agreement_rate = agreements / len(products) if products else 0
 
     fraud_count = sum(1 for p in validation if p["true_label"] == "fraud")
     legit_count = sum(1 for p in validation if p["true_label"] == "legitimate")
+    agreed      = sum(1 for p in validation if p["labels_agree"])
 
     print(f"\nLabeling complete")
     print(f"  Total processed  : {len(products):,}")
-    print(f"  Agreement rate   : {agreement_rate:.1%}")
+    print(f"  LLM/rule agreement: {agreement_rate:.1%} (on {agreed} products)")
     print(f"  Validation set   : {len(validation):,}")
     print(f"  Fraud            : {fraud_count:,}")
     print(f"  Legitimate       : {legit_count:,}")
