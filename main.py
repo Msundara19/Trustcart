@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.scraping.google_shopping import GoogleShoppingScraper
 from app.scraping.ebay import EbayScraper
 from app.models.fraud_detector import UniversalFraudDetector
+from app.models.evaluator import FraudDetectionEvaluator
 import os
 from dotenv import load_dotenv
 from typing import List, Dict, Optional
@@ -32,6 +33,7 @@ app.add_middleware(
 google_scraper = GoogleShoppingScraper(api_key=os.getenv("SERPAPI_KEY"))
 ebay_scraper = EbayScraper(api_key=os.getenv("SERPAPI_KEY"))
 fraud_detector = UniversalFraudDetector()
+evaluator = FraudDetectionEvaluator()
 
 def _generate_category_warning(query: str, valid_products: List[Dict], invalid_products: List[Dict]) -> Optional[str]:
     """Generate warnings about filtered products and search limitations"""
@@ -264,6 +266,31 @@ async def test_llm():
             "error": str(e),
             "traceback": traceback.format_exc()
         }
+
+@app.get("/api/evaluate")
+async def evaluate_model(
+    threshold: float = Query(default=0.55, ge=0.0, le=1.0),
+    sample_size: Optional[int] = Query(default=1000, ge=100, le=10000),
+):
+    """
+    Evaluate fraud detector performance against labeled dataset.
+
+    Uses data/validation_dataset.json (real scraped + LLM-labeled) if available,
+    falls back to data/synthetic_dataset.json.
+
+    Returns precision, recall, F1, AUC, confusion matrix,
+    per-category breakdown, and threshold sensitivity analysis.
+    """
+    try:
+        metrics = evaluator.evaluate_from_file(
+            threshold=threshold,
+            sample_size=sample_size,
+        )
+        return metrics
+    except Exception as e:
+        import traceback
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 

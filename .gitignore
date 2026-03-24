@@ -32,6 +32,12 @@ Thumbs.db
 *.log
 
 # Project specific
-data/
 notebooks/
 tests/
+
+# Generated datasets (large files — run scripts locally to regenerate)
+data/synthetic_dataset.json
+data/raw_scraped.json
+data/validation_dataset.json
+data/labeling_summary.json
+data/evaluation_results.json
