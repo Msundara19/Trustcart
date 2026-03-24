@@ -269,7 +269,7 @@ async def test_llm():
 
 @app.get("/api/evaluate")
 async def evaluate_model(
-    threshold: float = Query(default=0.55, ge=0.0, le=1.0),
+    threshold: float = Query(default=0.25, ge=0.0, le=1.0),
     sample_size: Optional[int] = Query(default=1000, ge=100, le=10000),
 ):
     """
