@@ -79,102 +79,128 @@ class UniversalFraudDetector:
     
     def _calculate_risk(self, product: Dict, all_products: List[Dict]) -> Tuple[float, List[str]]:
         """
-        Calculate risk score with percentile-based price tier classification
-        ROBUST: Uses median and removes outliers for accurate assessment
+        Weighted risk scoring matching documented factor breakdown:
+          1. Price Analysis      50%
+          2. Seller Reputation   25%
+          3. Product Attributes  15%
+          4. Historical Patterns 10%
+
+        Each component is scored independently on a 0–1 scale,
+        then multiplied by its weight to produce the final score.
         """
-        risk_score = 0.0
         risk_factors = []
-        
+
         price = product.get('price', 0)
         rating = product.get('rating', 0)
         reviews = product.get('reviews', 0)
-        
-        # Get seller trust info
+        condition = product.get('condition', 'unknown')
+
         seller = product.get('seller', {})
         seller_name = seller.get('name', '').lower()
         source = product.get('source', '').lower()
         platform = product.get('platform', '').lower()
-        
-        # Trusted sellers list (major retailers)
+
         trusted_sellers = [
             'target', 'walmart', 'best buy', 'amazon', 'ulta', 'kohl',
             'barnes & noble', 'books a million', 'abebooks', 'dyson',
             'ikea', 'macy', 'west elm', 'crate & barrel', 'wayfair'
         ]
-        
-        is_trusted = any(trusted in seller_name or trusted in source 
-                        for trusted in trusted_sellers)
-        
-        # Price analysis with percentiles (ROBUST TO OUTLIERS)
-        if len(all_products) >= 5:  # Need minimum 5 products for meaningful analysis
-            price_tier_info = self._classify_price_tier(price, all_products)
-            
-            # Add tier info to product for debugging
-            product['price_tier'] = price_tier_info['tier']
-            product['price_percentile'] = price_tier_info['percentile']
-            
-            # Risk assessment based on tier
-            if price_tier_info['is_outlier_high']:
-                # Extremely high-priced item (>10x median)
-                risk_score += 0.15
+        is_trusted = any(trusted in seller_name or trusted in source
+                         for trusted in trusted_sellers)
+
+        # ── 1. Price Analysis (50%) ──────────────────────────────────
+        price_score = 0.0
+        if len(all_products) >= 5:
+            tier = self._classify_price_tier(price, all_products)
+            product['price_tier'] = tier['tier']
+            product['price_percentile'] = tier['percentile']
+
+            if tier['is_outlier_high']:
+                price_score = 0.3
                 risk_factors.append("High-value or rare item - verify authenticity carefully")
-                
-            elif price_tier_info['tier'] == 'extremely_cheap':
-                # Bottom 10% - SUSPICIOUS unless trusted seller
+            elif tier['tier'] == 'extremely_cheap':
                 if is_trusted and platform == 'google_shopping':
-                    risk_score += 0.1
+                    price_score = 0.2
                     risk_factors.append("Significantly below typical price (possible clearance)")
                 else:
-                    risk_score += 0.5
-                    percent_below = int(((price_tier_info['median'] - price) / price_tier_info['median']) * 100)
-                    risk_factors.append(f"Extremely cheap: {percent_below}% below typical price")
-                    
-            elif price_tier_info['tier'] == 'budget':
-                # 10-25th percentile
-                if is_trusted:
-                    risk_score += 0.0  # No risk for trusted sellers
-                else:
-                    risk_score += 0.2
+                    price_score = 1.0
+                    pct = int(((tier['median'] - price) / tier['median']) * 100)
+                    risk_factors.append(f"Extremely cheap: {pct}% below typical price")
+            elif tier['tier'] == 'budget':
+                if not is_trusted:
+                    price_score = 0.4
                     risk_factors.append("Lower-priced option - verify condition and seller")
-                    
-            elif price_tier_info['tier'] == 'mid':
-                # 25-75th percentile - Normal pricing
-                risk_score += 0.0
-                
-            elif price_tier_info['tier'] in ['premium', 'luxury']:
-                # 75%+ - High value items
+            elif tier['tier'] in ['premium', 'luxury']:
                 if not is_trusted and reviews == 0:
-                    risk_score += 0.2
+                    price_score = 0.4
                     risk_factors.append("High-value item from seller with no reviews")
-        
-        # Rating analysis
-        if rating == 0:
-            if is_trusted:
-                risk_score += 0.05  # Minimal impact for known stores
-            else:
-                risk_score += 0.15
-                risk_factors.append("No rating available")
-        elif rating < 3.0:
-            risk_score += 0.25
-            risk_factors.append(f"Low rating: {rating}/5")
-        
-        # Reviews analysis
-        if reviews == 0:
-            if is_trusted:
-                risk_score += 0.05  # Minimal impact for known stores
-            else:
-                risk_score += 0.15
-                risk_factors.append("Very few reviews (0)")
-        elif reviews < 5:
-            risk_score += 0.1
-            risk_factors.append(f"Few reviews ({reviews})")
-        
-        # Seller rating analysis
+            # 'mid' tier → price_score stays 0.0 (normal pricing)
+
+        # ── 2. Seller Reputation (25%) ───────────────────────────────
+        seller_score = 0.0
+
+        if rating == 0 and reviews == 0:
+            seller_score = 0.1 if is_trusted else 0.8
+            if not is_trusted:
+                risk_factors.append("No rating or reviews")
+        else:
+            if rating == 0:
+                seller_score += 0.1 if is_trusted else 0.4
+                if not is_trusted:
+                    risk_factors.append("No rating available")
+            elif rating < 3.0:
+                seller_score += 1.0
+                risk_factors.append(f"Low rating: {rating}/5")
+            elif rating < 4.0:
+                seller_score += 0.2
+
+            if reviews == 0:
+                seller_score += 0.1 if is_trusted else 0.4
+                if not is_trusted:
+                    risk_factors.append("Very few reviews (0)")
+            elif reviews < 5:
+                seller_score += 0.2
+                risk_factors.append(f"Few reviews ({reviews})")
+
         seller_rating = seller.get('rating', 0)
         if seller_rating > 0 and seller_rating < 3.0:
-            risk_score += 0.2
+            seller_score += 0.4
             risk_factors.append(f"Low seller rating: {seller_rating}/5")
-        
+
+        seller_score = min(seller_score, 1.0)
+
+        # ── 3. Product Attributes (15%) ──────────────────────────────
+        attr_score = 0.0
+
+        if condition == 'unknown':
+            attr_score += 0.5
+            risk_factors.append("Product condition unknown")
+        elif condition == 'used':
+            attr_score += 0.2  # used items carry slightly more inherent risk
+
+        if len(product.get('title', '')) < 20:
+            attr_score += 0.4
+            risk_factors.append("Vague product description")
+
+        attr_score = min(attr_score, 1.0)
+
+        # ── 4. Historical Patterns (10%) ─────────────────────────────
+        hist_score = 0.0
+
+        # eBay unknown sellers carry more inherent platform risk
+        if platform == 'ebay' and not is_trusted:
+            hist_score += 0.3
+
+        hist_score = min(hist_score, 1.0)
+
+        # ── Weighted total ────────────────────────────────────────────
+        risk_score = (
+            price_score  * 0.50 +
+            seller_score * 0.25 +
+            attr_score   * 0.15 +
+            hist_score   * 0.10
+        )
+
         return min(risk_score, 1.0), risk_factors
     
     def _classify_price_tier(self, price: float, all_products: List[Dict]) -> Dict:
