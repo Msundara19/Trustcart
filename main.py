@@ -67,7 +67,7 @@ def _summarize_filtered_reasons(invalid_products: List[Dict]) -> Dict:
 async def search_products(
     query: str,
     num_results: int = Query(default=10, ge=1, le=50),
-    platform: str = Query(default="google", enum=["google", "ebay", "all"]),
+    platform: str = Query(default="all", enum=["google", "ebay", "all"]),
     max_price: Optional[int] = None,
     condition: Optional[str] = Query(default=None, enum=["new", "used", "refurbished"]),
     analyze_fraud: bool = True,

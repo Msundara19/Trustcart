@@ -3,7 +3,6 @@
 from typing import Dict, List, Tuple, Optional
 from .product_classifier import UniversalProductClassifier
 from .llm_reasoner import LLMFraudExplainer
-import statistics
 import numpy as np
 
 class UniversalFraudDetector:

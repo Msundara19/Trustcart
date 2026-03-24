@@ -27,7 +27,7 @@ class LLMFraudExplainer:
         
         # Model selection
         self.fast_model = "llama-3.1-8b-instant"
-        self.smart_model = "llama-3.1-70b-versatile"
+        self.smart_model = "llama-3.3-70b-versatile"
         
         # Cache for identical products
         self._cache = {}
