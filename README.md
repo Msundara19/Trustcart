@@ -169,6 +169,11 @@ curl "https://web-production-e61ac.up.railway.app/api/search/iphone%2013?platfor
 - `xgb_risk_level` — XGBoost risk classification
 - `price_tier` / `price_percentile` — category-relative pricing
 - `fraud_analysis` — LLM reasoning, red flags, recommendation
+- `duplicate_group` / `is_cross_platform` — semantic duplicate flags
+- `similar_to` — list of near-duplicate listings with similarity scores
+
+**Response top-level also includes:**
+- `duplicate_summary` — cluster count, cross-platform pair count, group details
 
 ### Evaluate Model Performance
 ```
@@ -178,9 +183,10 @@ Returns side-by-side rule-based vs XGBoost metrics: precision, recall, F1, AUC, 
 
 ### Other Endpoints
 ```
-GET /api/health        # System status + model availability
-GET /api/platforms     # Supported platforms and capabilities
-GET /api/test-llm      # Validate Groq LLM connectivity
+GET /api/health           # System status + model availability
+GET /api/platforms        # Supported platforms and capabilities
+GET /api/test-llm         # Validate Groq LLM connectivity
+GET /api/logs/stats?days=7  # Prediction log stats (fraud rate, volume, XGBoost coverage)
 ```
 
 ---
@@ -278,13 +284,13 @@ curl "http://localhost:8000/api/health"
 - [x] Evaluation benchmark pipeline — synthetic + real labeled datasets
 - [x] `/api/evaluate` — live model comparison endpoint
 - [x] Production deployment (Railway, CI/CD from GitHub)
+- [x] Semantic duplicate detection — TF-IDF cosine similarity, cross-platform pair detection
+- [x] Prediction logging — rotating JSONL logs for dataset growth pipeline
 
 ### In Progress
-- [ ] Semantic duplicate detection using sentence embeddings
-- [ ] Prediction logging + dataset growth pipeline
+- [ ] Browser extension (Chrome/Firefox)
 
 ### Planned
-- [ ] Browser extension (Chrome/Firefox)
 - [ ] Historical price tracking
 - [ ] Amazon + AliExpress integration
 - [ ] Image analysis for counterfeit detection
