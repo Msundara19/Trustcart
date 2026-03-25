@@ -69,7 +69,9 @@ class PredictionLogger:
                     try:
                         r = json.loads(line)
                         total += 1
-                        if r.get("risk_level") == "HIGH":
+                        # Use XGBoost level when available — it's the primary classifier
+                        effective_level = r.get("xgb_risk_level") or r.get("risk_level")
+                        if effective_level == "HIGH":
                             fraud += 1
                         if r.get("xgb_score") is not None:
                             xgb_present += 1
