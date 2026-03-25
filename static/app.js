@@ -231,7 +231,13 @@ function createCard(p) {
     const link         = p.link || p.product_link || '';
 
     // Trust score = inverse of the primary risk score (user-facing %)
-    const trustPct = Math.round((1 - (xgbScore ?? ruleScore)) * 100);
+    let trustPct = Math.round((1 - (xgbScore ?? ruleScore)) * 100);
+
+    // Cap trust based on LLM recommendation — prevents "100% safe + AVOID" contradiction
+    const rec = fa.recommendation || '';
+    if (rec.includes('AVOID'))   trustPct = Math.min(trustPct, 20);
+    else if (rec.includes('CAUTION')) trustPct = Math.min(trustPct, 55);
+
     const trustColor = trustPct >= 75 ? '#16a34a' : trustPct >= 45 ? '#d97706' : '#dc2626';
 
     // Models disagree
@@ -301,9 +307,7 @@ function createCard(p) {
 
             <!-- Rating -->
             <div class="flex items-center gap-3 text-xs text-gray-500">
-                ${p.rating > 0
-                    ? `<span>⭐ ${p.rating} ${p.reviews > 0 ? `<span class="text-gray-400">(${fmtNum(p.reviews)} reviews)</span>` : ''}</span>`
-                    : `<span class="text-amber-600 font-medium">⚠ No reviews yet</span>`}
+                ${ratingDisplay(p)}
                 ${p.source ? `<span class="text-gray-300">·</span><span class="truncate">${escHtml(p.source)}</span>` : ''}
             </div>
 
@@ -409,6 +413,22 @@ function friendlyFlag(flag) {
     if (flag.includes('Lower-priced'))      return 'Priced lower than usual — confirm it meets your expectations';
     if (flag.includes('High-value or rare')) return 'Rare or high-value item — verify authenticity carefully';
     return flag; // fallback: show as-is
+}
+
+function ratingDisplay(p) {
+    const seller = p.seller || {};
+    const feedbackPct = seller.feedback_pct;
+    const sellerReviews = seller.reviews;
+
+    if (p.rating > 0) {
+        return `<span>⭐ ${p.rating}${p.reviews > 0 ? ` <span class="text-gray-400">(${fmtNum(p.reviews)})</span>` : ''}</span>`;
+    }
+    // eBay: use seller feedback % as proxy
+    if (feedbackPct > 0) {
+        const color = feedbackPct >= 98 ? 'text-green-600' : feedbackPct >= 95 ? 'text-yellow-600' : 'text-red-500';
+        return `<span class="${color} font-medium">👤 ${feedbackPct}% positive${sellerReviews > 0 ? ` <span class="text-gray-400">(${fmtNum(sellerReviews)} seller ratings)</span>` : ''}</span>`;
+    }
+    return `<span class="text-amber-600 font-medium">⚠ No reviews yet</span>`;
 }
 
 // ── Misc helpers ──────────────────────────────────────────────────────

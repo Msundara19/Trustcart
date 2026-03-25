@@ -85,20 +85,33 @@ class EbayScraper(BaseScraper):
             # Ensure link is always present
             product_link = raw_data.get("link", "")
             
+            # eBay organic results carry rating/reviews at the item level
+            item_rating  = raw_data.get("rating", 0) or 0
+            item_reviews = raw_data.get("reviews", 0) or 0
+
+            # Seller feedback: convert positive_feedback_in_percentage → 0-5 star proxy
+            seller_raw      = raw_data.get("seller", {}) or {}
+            feedback_pct    = seller_raw.get("positive_feedback_in_percentage", 0) or 0
+            seller_rating   = round(feedback_pct / 20, 1) if feedback_pct else 0   # 99% → 4.95
+            seller_reviews  = seller_raw.get("reviews", 0) or 0
+            seller_name     = seller_raw.get("username") or seller_raw.get("name") or "eBay Seller"
+
             return {
                 "title": raw_data.get("title", ""),
                 "price": self.normalize_price(price_raw),
                 "price_raw": price_raw,
                 "source": "eBay",
-                "link": product_link,  # Make sure link is here
+                "link": product_link,
                 "product_link": product_link,
                 "thumbnail": raw_data.get("thumbnail", ""),
-                "rating": 0,
-                "reviews": 0,
+                "rating":  item_rating,
+                "reviews": item_reviews,
                 "seller": {
-                    "name": raw_data.get("seller", {}).get("name", "eBay Seller"),
-                    "rating": raw_data.get("seller", {}).get("rating", 0),
-                    "link": product_link
+                    "name":    seller_name,
+                    "rating":  seller_rating,
+                    "reviews": seller_reviews,
+                    "feedback_pct": feedback_pct,
+                    "link":    product_link,
                 },
                 "delivery": raw_data.get("shipping", ""),
                 "extracted_price": self.normalize_price(price_raw),
