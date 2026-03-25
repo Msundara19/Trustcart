@@ -5,125 +5,258 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TrustCart — AI Fraud Detection</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; }
+        * { font-family: 'Montserrat', sans-serif; }
 
-        .spinner {
-            border: 3px solid #e5e7eb;
-            border-top: 3px solid #2563eb;
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 35%, #1d4ed8 65%, #0ea5e9 100%);
+            min-height: 100vh;
+        }
+
+        /* Animated gradient orbs in background */
+        .bg-orb {
+            position: fixed;
             border-radius: 50%;
-            width: 36px;
-            height: 36px;
-            animation: spin 0.8s linear infinite;
+            filter: blur(80px);
+            opacity: 0.18;
+            pointer-events: none;
+            animation: drift 12s ease-in-out infinite alternate;
         }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        .bg-orb-1 { width:500px;height:500px;background:#3b82f6;top:-100px;left:-100px;animation-delay:0s; }
+        .bg-orb-2 { width:400px;height:400px;background:#0ea5e9;bottom:-80px;right:-80px;animation-delay:-4s; }
+        .bg-orb-3 { width:300px;height:300px;background:#6366f1;top:40%;left:55%;animation-delay:-8s; }
 
-        .card-enter {
-            animation: fadeUp 0.3s ease forwards;
-        }
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(12px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-
-        .risk-badge-HIGH    { background:#fef2f2; color:#991b1b; border:1px solid #fca5a5; }
-        .risk-badge-MEDIUM  { background:#fffbeb; color:#92400e; border:1px solid #fcd34d; }
-        .risk-badge-LOW     { background:#f0fdf4; color:#166534; border:1px solid #86efac; }
-        .risk-badge-UNKNOWN { background:#f9fafb; color:#374151; border:1px solid #d1d5db; }
-
-        .xgb-HIGH    { color:#dc2626; }
-        .xgb-MEDIUM  { color:#d97706; }
-        .xgb-LOW     { color:#16a34a; }
-
-        .pill { display:inline-flex; align-items:center; gap:4px; border-radius:9999px;
-                padding:2px 10px; font-size:0.72rem; font-weight:600; letter-spacing:.03em; }
-
-        .bar-bg { background:#e5e7eb; border-radius:4px; height:6px; overflow:hidden; }
-        .bar-fill { height:100%; border-radius:4px; transition:width .4s ease; }
-
-        .conflict-banner {
-            background: linear-gradient(90deg, #fef3c7, #fef9ee);
-            border-left: 3px solid #f59e0b;
+        @keyframes drift {
+            from { transform: translate(0,0) scale(1); }
+            to   { transform: translate(40px,30px) scale(1.1); }
         }
 
-        .dup-badge { background:#ede9fe; color:#5b21b6; border:1px solid #c4b5fd; }
-        .cross-badge { background:#dbeafe; color:#1e40af; border:1px solid #93c5fd; }
+        /* Glass card */
+        .glass {
+            background: rgba(255,255,255,0.07);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+        .glass-white {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(18px);
+            border: 1px solid rgba(255,255,255,0.4);
+        }
+
+        /* Logo pulse ring */
+        .logo-ring {
+            position:relative;
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+        }
+        .logo-ring::before {
+            content:'';
+            position:absolute;
+            inset:-8px;
+            border-radius:50%;
+            background: conic-gradient(from 0deg, #3b82f6, #0ea5e9, #6366f1, #3b82f6);
+            animation: spin-ring 4s linear infinite;
+            opacity:0.6;
+        }
+        .logo-ring::after {
+            content:'';
+            position:absolute;
+            inset:-4px;
+            border-radius:50%;
+            background: linear-gradient(135deg,#1e3a5f,#0f172a);
+        }
+        @keyframes spin-ring { to { transform: rotate(360deg); } }
+
+        /* Loading stages animation */
+        .stage { opacity:0; transform:translateX(-8px); transition: all 0.4s ease; }
+        .stage.active { opacity:1; transform:translateX(0); }
+        .stage.done { opacity:0.4; }
+
+        /* Scanning bar */
+        .scan-bar {
+            height:3px;
+            background:linear-gradient(90deg,transparent,#38bdf8,#818cf8,transparent);
+            background-size:200% 100%;
+            animation: scan 1.5s ease-in-out infinite;
+        }
+        @keyframes scan { 0%{background-position:200%} 100%{background-position:-200%} }
+
+        /* Pulse dots */
+        .dot { display:inline-block; border-radius:50%; animation: pulse-dot 1.2s ease-in-out infinite; }
+        .dot:nth-child(2){animation-delay:.2s}
+        .dot:nth-child(3){animation-delay:.4s}
+        @keyframes pulse-dot { 0%,100%{transform:scale(.6);opacity:.4} 50%{transform:scale(1);opacity:1} }
+
+        /* Counter ticker */
+        @keyframes countUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+        .count-tick { animation: countUp 0.3s ease forwards; }
+
+        /* Card entrance */
+        .card-enter { animation: fadeUp 0.35s ease forwards; opacity:0; }
+        @keyframes fadeUp { to{opacity:1;transform:translateY(0)} from{opacity:0;transform:translateY(16px)} }
+
+        /* Risk badges */
+        .risk-HIGH   { background:#fef2f2;color:#991b1b;border:1px solid #fca5a5; }
+        .risk-MEDIUM { background:#fffbeb;color:#92400e;border:1px solid #fcd34d; }
+        .risk-LOW    { background:#f0fdf4;color:#166534;border:1px solid #86efac; }
+        .risk-UNKNOWN{ background:#f9fafb;color:#374151;border:1px solid #d1d5db; }
+
+        .pill { display:inline-flex;align-items:center;gap:3px;border-radius:9999px;
+                padding:2px 9px;font-size:.7rem;font-weight:700;letter-spacing:.02em; }
+
+        .bar-bg  { background:#e5e7eb;border-radius:4px;height:5px;overflow:hidden; }
+        .bar-fill{ height:100%;border-radius:4px;transition:width .5s cubic-bezier(.4,0,.2,1); }
+
+        .conflict-banner { background:linear-gradient(90deg,#fef3c7,#fef9ee);border-left:3px solid #f59e0b; }
+
+        /* Input focus glow */
+        .search-input:focus { box-shadow: 0 0 0 3px rgba(59,130,246,0.3); }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body>
 
-    <!-- Header -->
-    <header class="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-900">TrustCart</h1>
-                <p class="text-xs text-gray-500 mt-0.5">AI-Powered E-Commerce Fraud Detection</p>
+    <!-- Background orbs -->
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
+
+    <div class="relative z-10 min-h-screen flex flex-col">
+
+        <!-- ── HERO / HEADER ───────────────────────────────────────────── -->
+        <div id="heroSection" class="flex flex-col items-center justify-center pt-16 pb-10 px-6 text-center transition-all duration-700">
+
+            <!-- Logo -->
+            <div class="logo-ring w-20 h-20 mb-6">
+                <div class="relative z-10 w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-xl">
+                    <span class="text-white text-2xl font-black">T</span>
+                </div>
             </div>
-            <div class="flex gap-2 text-xs text-gray-500">
-                <span class="pill" style="background:#f0fdf4;color:#166534;border:1px solid #86efac">XGBoost</span>
-                <span class="pill" style="background:#eff6ff;color:#1e40af;border:1px solid #93c5fd">Groq LLM</span>
-                <span class="pill" style="background:#faf5ff;color:#5b21b6;border:1px solid #c4b5fd">Duplicate Detection</span>
-            </div>
-        </div>
-    </header>
 
-    <main class="max-w-7xl mx-auto px-6 py-8">
+            <h1 class="text-5xl font-black text-white tracking-tight drop-shadow-lg">TrustCart</h1>
+            <p class="text-blue-200 text-base font-medium mt-2 tracking-wide">AI-Powered E-Commerce Fraud Detection</p>
 
-        <!-- Search Bar -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-            <div class="flex flex-col md:flex-row gap-3">
-                <input
-                    type="text"
-                    id="searchQuery"
-                    placeholder="Search any product — iPhone, used cars, headphones..."
-                    class="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                    onkeypress="if(event.key==='Enter') searchProducts()"
-                >
-                <select id="platformSelect" class="px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                    <option value="all">All Platforms</option>
-                    <option value="google">Google Shopping</option>
-                    <option value="ebay">eBay</option>
-                </select>
-                <select id="numResults" class="px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                    <option value="10">10 results</option>
-                    <option value="20" selected>20 results</option>
-                    <option value="30">30 results</option>
-                    <option value="50">50 results</option>
-                </select>
-                <input type="number" id="maxPrice" placeholder="Max price" class="w-32 px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                <button
-                    onclick="searchProducts()"
-                    id="searchBtn"
-                    class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors whitespace-nowrap"
-                >
-                    Analyze →
-                </button>
+            <!-- Tech pills -->
+            <div class="flex flex-wrap justify-center gap-2 mt-5">
+                <span class="pill" style="background:rgba(34,197,94,.15);color:#86efac;border:1px solid rgba(134,239,172,.3)">⚡ XGBoost 94.5% F1</span>
+                <span class="pill" style="background:rgba(99,102,241,.15);color:#c4b5fd;border:1px solid rgba(196,181,253,.3)">🤖 Groq LLM</span>
+                <span class="pill" style="background:rgba(14,165,233,.15);color:#7dd3fc;border:1px solid rgba(125,211,252,.3)">🔁 Duplicate Detection</span>
+                <span class="pill" style="background:rgba(249,115,22,.15);color:#fdba74;border:1px solid rgba(253,186,116,.3)">📊 Real-time Analysis</span>
             </div>
         </div>
 
-        <!-- Loading -->
-        <div id="loadingState" class="hidden flex flex-col items-center py-20 gap-4">
-            <div class="spinner"></div>
-            <p class="text-sm text-gray-500">Scraping listings and running fraud analysis...</p>
+        <!-- ── SEARCH ───────────────────────────────────────────────────── -->
+        <div class="flex justify-center px-6 mb-8">
+            <div class="glass rounded-2xl p-5 w-full max-w-4xl">
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <input
+                        type="text"
+                        id="searchQuery"
+                        placeholder="Search any product — iPhone 13, used cars, headphones..."
+                        class="search-input flex-1 px-5 py-3.5 rounded-xl bg-white/90 text-gray-800 text-sm font-medium placeholder-gray-400 outline-none border border-white/50 transition-all"
+                        onkeypress="if(event.key==='Enter') searchProducts()"
+                    >
+                    <select id="platformSelect" class="px-4 py-3.5 rounded-xl bg-white/90 text-gray-700 text-sm font-semibold outline-none border border-white/50 cursor-pointer">
+                        <option value="all">All Platforms</option>
+                        <option value="google">Google Shopping</option>
+                        <option value="ebay">eBay</option>
+                    </select>
+                    <select id="numResults" class="px-4 py-3.5 rounded-xl bg-white/90 text-gray-700 text-sm font-semibold outline-none border border-white/50 cursor-pointer">
+                        <option value="10">10 results</option>
+                        <option value="20" selected>20 results</option>
+                        <option value="30">30 results</option>
+                        <option value="50">50 results</option>
+                    </select>
+                    <input type="number" id="maxPrice" placeholder="Max $" class="search-input w-28 px-4 py-3.5 rounded-xl bg-white/90 text-gray-700 text-sm font-semibold outline-none border border-white/50">
+                    <button
+                        onclick="searchProducts()"
+                        id="searchBtn"
+                        class="px-7 py-3.5 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white text-sm font-bold rounded-xl shadow-lg transition-all whitespace-nowrap disabled:opacity-60"
+                    >
+                        Analyze →
+                    </button>
+                </div>
+            </div>
         </div>
 
-        <!-- Empty -->
-        <div id="emptyState" class="flex flex-col items-center py-20 text-center">
-            <div class="text-5xl mb-4">🛒</div>
-            <h3 class="text-lg font-semibold text-gray-700">Search any product</h3>
-            <p class="text-sm text-gray-400 mt-1">TrustCart analyzes listings across Google Shopping and eBay in real time</p>
+        <!-- ── LOADING ─────────────────────────────────────────────────── -->
+        <div id="loadingState" class="hidden flex justify-center px-6 mb-8">
+            <div class="glass rounded-2xl p-8 w-full max-w-2xl">
+
+                <!-- Scanning bar -->
+                <div class="scan-bar rounded-full mb-6"></div>
+
+                <!-- Animated stage list -->
+                <div class="space-y-4" id="stageList">
+                    <div class="stage flex items-center gap-4" id="stage-0">
+                        <div class="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-base shrink-0" id="stage-icon-0">🔍</div>
+                        <div>
+                            <p class="text-white text-sm font-semibold">Scraping listings</p>
+                            <p class="text-blue-200 text-xs">Fetching from Google Shopping + eBay via SerpAPI</p>
+                        </div>
+                        <div class="ml-auto" id="stage-status-0"></div>
+                    </div>
+                    <div class="stage flex items-center gap-4" id="stage-1">
+                        <div class="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-base shrink-0">📊</div>
+                        <div>
+                            <p class="text-white text-sm font-semibold">Statistical scoring</p>
+                            <p class="text-blue-200 text-xs">Price percentile analysis · outlier removal · seller trust</p>
+                        </div>
+                        <div class="ml-auto" id="stage-status-1"></div>
+                    </div>
+                    <div class="stage flex items-center gap-4" id="stage-2">
+                        <div class="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center text-base shrink-0">⚡</div>
+                        <div>
+                            <p class="text-white text-sm font-semibold">XGBoost inference</p>
+                            <p class="text-blue-200 text-xs">14-feature gradient boosted classifier · 94.5% F1</p>
+                        </div>
+                        <div class="ml-auto" id="stage-status-2"></div>
+                    </div>
+                    <div class="stage flex items-center gap-4" id="stage-3">
+                        <div class="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center text-base shrink-0">🤖</div>
+                        <div>
+                            <p class="text-white text-sm font-semibold">Groq LLM reasoning</p>
+                            <p class="text-blue-200 text-xs">Natural language fraud explanation · top 5 risky items</p>
+                        </div>
+                        <div class="ml-auto" id="stage-status-3"></div>
+                    </div>
+                    <div class="stage flex items-center gap-4" id="stage-4">
+                        <div class="w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center text-base shrink-0">🔁</div>
+                        <div>
+                            <p class="text-white text-sm font-semibold">Duplicate detection</p>
+                            <p class="text-blue-200 text-xs">TF-IDF cosine similarity · cross-platform pair matching</p>
+                        </div>
+                        <div class="ml-auto" id="stage-status-4"></div>
+                    </div>
+                </div>
+
+                <!-- Pulse dots -->
+                <div class="flex justify-center gap-2 mt-6">
+                    <span class="dot w-2 h-2 bg-blue-400"></span>
+                    <span class="dot w-2 h-2 bg-indigo-400"></span>
+                    <span class="dot w-2 h-2 bg-cyan-400"></span>
+                </div>
+            </div>
         </div>
 
-        <!-- Summary Bar (hidden until results) -->
-        <div id="summaryBar" class="hidden mb-6"></div>
-
-        <!-- Results Grid -->
-        <div id="resultsSection" class="hidden">
-            <div id="resultsGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"></div>
+        <!-- ── EMPTY STATE ─────────────────────────────────────────────── -->
+        <div id="emptyState" class="flex flex-col items-center py-8 text-center px-6">
+            <p class="text-blue-200 text-sm font-medium">Enter a product above to start real-time fraud analysis</p>
         </div>
 
-    </main>
+        <!-- ── SUMMARY BAR ─────────────────────────────────────────────── -->
+        <div id="summaryBar" class="hidden px-6 mb-6 flex justify-center">
+            <div id="summaryContent" class="glass-white rounded-2xl p-5 w-full max-w-7xl shadow-xl"></div>
+        </div>
+
+        <!-- ── RESULTS ─────────────────────────────────────────────────── -->
+        <div id="resultsSection" class="hidden px-6 pb-16">
+            <div id="resultsGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 max-w-7xl mx-auto"></div>
+        </div>
+
+    </div><!-- /z-10 -->
 
     <script src="/static/app.js"></script>
 </body>

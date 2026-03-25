@@ -1,16 +1,60 @@
 const API_BASE = window.location.origin;
 
+// ── Stage animation ───────────────────────────────────────────────────
+
+const STAGE_TIMINGS = [0, 800, 1800, 2800, 4200]; // ms after search starts
+let stageTimer = null;
+
+function startStageAnimation() {
+    // Reset all stages
+    for (let i = 0; i < 5; i++) {
+        const el = document.getElementById(`stage-${i}`);
+        el.classList.remove('active', 'done');
+        const st = document.getElementById(`stage-status-${i}`);
+        st.innerHTML = '';
+    }
+
+    // Activate each stage on a timer
+    STAGE_TIMINGS.forEach((delay, i) => {
+        setTimeout(() => {
+            // Mark previous as done
+            if (i > 0) {
+                document.getElementById(`stage-${i-1}`).classList.add('done');
+                document.getElementById(`stage-${i-1}`).classList.remove('active');
+                document.getElementById(`stage-status-${i-1}`).innerHTML =
+                    `<span style="color:#4ade80;font-size:.8rem;font-weight:700">✓</span>`;
+            }
+            const el = document.getElementById(`stage-${i}`);
+            el.classList.add('active');
+            document.getElementById(`stage-status-${i}`).innerHTML =
+                `<span class="dot w-2 h-2 rounded-full inline-block" style="background:#38bdf8"></span>`;
+        }, delay);
+    });
+}
+
+function stopStageAnimation() {
+    // Mark all as done
+    for (let i = 0; i < 5; i++) {
+        const el = document.getElementById(`stage-${i}`);
+        el.classList.add('done');
+        el.classList.remove('active');
+        const st = document.getElementById(`stage-status-${i}`);
+        st.innerHTML = `<span style="color:#4ade80;font-size:.8rem;font-weight:700">✓</span>`;
+    }
+}
+
 // ── Search ────────────────────────────────────────────────────────────
 
 async function searchProducts() {
-    const query     = document.getElementById('searchQuery').value.trim();
-    const platform  = document.getElementById('platformSelect').value;
+    const query      = document.getElementById('searchQuery').value.trim();
+    const platform   = document.getElementById('platformSelect').value;
     const numResults = document.getElementById('numResults').value;
-    const maxPrice  = document.getElementById('maxPrice').value;
+    const maxPrice   = document.getElementById('maxPrice').value;
 
     if (!query) { alert('Please enter a product name'); return; }
 
     setLoading(true);
+    startStageAnimation();
 
     try {
         let url = `${API_BASE}/api/search/${encodeURIComponent(query)}?platform=${platform}&num_results=${numResults}`;
@@ -18,6 +62,10 @@ async function searchProducts() {
 
         const res  = await fetch(url);
         const data = await res.json();
+
+        stopStageAnimation();
+        // Brief pause so user sees the completed stages
+        await new Promise(r => setTimeout(r, 500));
 
         setLoading(false);
         renderSummaryBar(data);
@@ -53,9 +101,8 @@ function renderSummaryBar(data) {
 
     const pct = (n, t) => Math.round((n / t) * 100);
 
-    document.getElementById('summaryBar').innerHTML = `
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-            <div class="flex flex-wrap gap-6 items-start">
+    document.getElementById('summaryContent').innerHTML = `
+        <div class="flex flex-wrap gap-6 items-start">
 
                 <!-- Risk breakdown -->
                 <div class="flex-1 min-w-[200px]">
@@ -98,6 +145,7 @@ function renderSummaryBar(data) {
     `;
 
     document.getElementById('summaryBar').classList.remove('hidden');
+    document.getElementById('summaryBar').style.display = 'flex';
 }
 
 function riskBar(level, count, total) {
