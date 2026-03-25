@@ -162,18 +162,21 @@ def _fraud_product(category: str, cfg: Dict) -> Dict:
     ])
 
     return {
-        "title":     title,
-        "price":     max(round(price, 2), 0.01),
-        "rating":    rating,
-        "reviews":   reviews,
-        "platform":  platform,
-        "source":    seller_name,
-        "condition": condition,
-        "category":  category,
+        "title":         title,
+        "price":         max(round(price, 2), 0.01),
+        "rating":        rating,
+        "reviews":       reviews,
+        "quantity_sold": random.randint(0, 8),   # fraud listings rarely have many sales
+        "platform":      platform,
+        "source":        seller_name,
+        "condition":     condition,
+        "category":      category,
         "seller":    {
-            "name":   seller_name,
-            "rating": round(random.uniform(0, 2.5), 1) if random.random() > 0.3 else 0,
-            "link":   "",
+            "name":         seller_name,
+            "rating":       round(random.uniform(0, 2.5), 1) if random.random() > 0.3 else 0,
+            "reviews":      random.randint(0, 50),
+            "feedback_pct": round(random.uniform(40, 85), 1),
+            "link":         "",
         },
         "link":        f"https://{platform}.com/item/{random.randint(100000, 999999)}",
         "thumbnail":   "",
@@ -201,19 +204,26 @@ def _legit_product(category: str, cfg: Dict) -> Dict:
         f"{seller_name} {base_title}",
     ])
 
+    qty           = random.randint(50, 8000)
+    feedback_pct  = round(random.uniform(97, 100), 1)
+    seller_reviews_count = random.randint(200, 80000)
+
     return {
-        "title":     title,
-        "price":     round(price, 2),
-        "rating":    rating,
-        "reviews":   reviews,
-        "platform":  platform,
-        "source":    seller_name.lower(),
-        "condition": condition,
-        "category":  category,
+        "title":         title,
+        "price":         round(price, 2),
+        "rating":        rating,
+        "reviews":       reviews,
+        "quantity_sold": qty,
+        "platform":      platform,
+        "source":        seller_name.lower(),
+        "condition":     condition,
+        "category":      category,
         "seller":    {
-            "name":   seller_name,
-            "rating": round(random.uniform(4.0, 5.0), 1),
-            "link":   "",
+            "name":         seller_name,
+            "rating":       round(random.uniform(4.0, 5.0), 1),
+            "reviews":      seller_reviews_count,
+            "feedback_pct": feedback_pct,
+            "link":         "",
         },
         "link":       f"https://{platform}.com/item/{random.randint(100000, 999999)}",
         "thumbnail":  "",
@@ -237,18 +247,21 @@ def _edge_case(category: str, cfg: Dict) -> Dict:
     true_label = "fraud" if (price / cfg["price_mean"]) < 0.3 else "legitimate"
 
     return {
-        "title":     f"{base_title} {condition} - good deal",
-        "price":     max(price, 0.01),
-        "rating":    rating,
-        "reviews":   reviews,
-        "platform":  platform,
-        "source":    seller_name,
-        "condition": condition,
-        "category":  category,
+        "title":         f"{base_title} {condition} - good deal",
+        "price":         max(price, 0.01),
+        "rating":        rating,
+        "reviews":       reviews,
+        "quantity_sold": random.randint(0, 60),
+        "platform":      platform,
+        "source":        seller_name,
+        "condition":     condition,
+        "category":      category,
         "seller":    {
-            "name":   seller_name,
-            "rating": round(random.uniform(2.5, 4.0), 1),
-            "link":   "",
+            "name":         seller_name,
+            "rating":       round(random.uniform(2.5, 4.0), 1),
+            "reviews":      random.randint(10, 500),
+            "feedback_pct": round(random.uniform(70, 97), 1),
+            "link":         "",
         },
         "link":       f"https://ebay.com/item/{random.randint(100000, 999999)}",
         "thumbnail":  "",

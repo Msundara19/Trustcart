@@ -96,6 +96,9 @@ class EbayScraper(BaseScraper):
             seller_reviews  = seller_raw.get("reviews", 0) or 0
             seller_name     = seller_raw.get("username") or seller_raw.get("name") or "eBay Seller"
 
+            # Quantity sold — strong legitimacy signal
+            quantity_sold = raw_data.get("extracted_quantity_sold", 0) or 0
+
             return {
                 "title": raw_data.get("title", ""),
                 "price": self.normalize_price(price_raw),
@@ -104,14 +107,15 @@ class EbayScraper(BaseScraper):
                 "link": product_link,
                 "product_link": product_link,
                 "thumbnail": raw_data.get("thumbnail", ""),
-                "rating":  item_rating,
-                "reviews": item_reviews,
+                "rating":       item_rating,
+                "reviews":      item_reviews,
+                "quantity_sold": quantity_sold,
                 "seller": {
-                    "name":    seller_name,
-                    "rating":  seller_rating,
-                    "reviews": seller_reviews,
+                    "name":         seller_name,
+                    "rating":       seller_rating,
+                    "reviews":      seller_reviews,
                     "feedback_pct": feedback_pct,
-                    "link":    product_link,
+                    "link":         product_link,
                 },
                 "delivery": raw_data.get("shipping", ""),
                 "extracted_price": self.normalize_price(price_raw),

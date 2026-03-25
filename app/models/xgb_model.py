@@ -39,6 +39,10 @@ class XGBFraudClassifier:
         "has_rating",
         "has_reviews",
         "price_percentile",
+        # New features (v2)
+        "log_quantity_sold",
+        "seller_feedback_pct",
+        "is_dynamic_trusted",
     ]
 
     def __init__(self):
@@ -75,9 +79,20 @@ class XGBFraudClassifier:
         title     = product.get("title", "")
         pct       = product.get("price_percentile", 50)
 
-        is_trusted = int(
+        is_hardcoded_trusted = int(
             any(t in seller_nm or t in source for t in self.TRUSTED_SELLERS)
         )
+
+        feedback_pct   = float(seller.get("feedback_pct", 0) or 0)
+        seller_reviews = int(seller.get("reviews", 0) or 0)
+        quantity_sold  = int(product.get("quantity_sold", 0) or 0)
+
+        is_dynamic_trusted = int(
+            platform == "ebay" and
+            feedback_pct >= 98.0 and
+            seller_reviews >= 1000
+        )
+        is_trusted = int(is_hardcoded_trusted or is_dynamic_trusted)
 
         return [
             np.log1p(price),
@@ -94,6 +109,10 @@ class XGBFraudClassifier:
             int(rating > 0),
             int(reviews > 0),
             pct,
+            # New features (v2)
+            np.log1p(quantity_sold),
+            feedback_pct / 100.0,        # normalise to 0-1
+            is_dynamic_trusted,
         ]
 
     # ── Inference ─────────────────────────────────────────────────────

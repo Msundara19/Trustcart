@@ -121,8 +121,22 @@ class UniversalFraudDetector:
             'barnes & noble', 'books a million', 'abebooks', 'dyson',
             'ikea', 'macy', 'west elm', 'crate & barrel', 'wayfair'
         ]
-        is_trusted = any(trusted in seller_name or trusted in source
-                         for trusted in trusted_sellers)
+        is_hardcoded_trusted = any(
+            trusted in seller_name or trusted in source
+            for trusted in trusted_sellers
+        )
+
+        # Dynamic trust: eBay seller with 1000+ ratings and ≥98% positive feedback
+        feedback_pct    = seller.get('feedback_pct', 0) or 0
+        seller_reviews  = seller.get('reviews', 0) or 0
+        is_dynamic_trusted = (
+            platform == 'ebay' and
+            feedback_pct >= 98.0 and
+            seller_reviews >= 1000
+        )
+        is_trusted = is_hardcoded_trusted or is_dynamic_trusted
+
+        quantity_sold = product.get('quantity_sold', 0) or 0
 
         # ── 1. Price Analysis (50%) ──────────────────────────────────
         price_score = 0.0
@@ -182,6 +196,14 @@ class UniversalFraudDetector:
         if seller_rating > 0 and seller_rating < 3.0:
             seller_score += 0.4
             risk_factors.append(f"Low seller rating: {seller_rating}/5")
+
+        # Quantity sold is a strong legitimacy signal — many sales = real listing
+        if quantity_sold >= 500:
+            seller_score = max(0.0, seller_score - 0.4)
+        elif quantity_sold >= 100:
+            seller_score = max(0.0, seller_score - 0.2)
+        elif quantity_sold >= 10:
+            seller_score = max(0.0, seller_score - 0.1)
 
         seller_score = min(seller_score, 1.0)
 
