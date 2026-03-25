@@ -4,15 +4,17 @@ from typing import Dict, List, Tuple, Optional
 from .product_classifier import UniversalProductClassifier
 from .llm_reasoner import LLMFraudExplainer
 from .xgb_model import XGBFraudClassifier
+from .duplicate_detector import SemanticDuplicateDetector
 import numpy as np
 
 class UniversalFraudDetector:
     """Universal fraud detection with Groq-powered AI explanations"""
-    
+
     def __init__(self):
-        self.classifier     = UniversalProductClassifier()
-        self.llm_explainer  = LLMFraudExplainer()
-        self.xgb_classifier = XGBFraudClassifier()
+        self.classifier          = UniversalProductClassifier()
+        self.llm_explainer       = LLMFraudExplainer()
+        self.xgb_classifier      = XGBFraudClassifier()
+        self.duplicate_detector  = SemanticDuplicateDetector()
         print(f"🔍 Fraud Detector initialized (LLM enabled: {self.llm_explainer.enabled}, XGBoost enabled: {self.xgb_classifier.enabled})")
     
     def analyze_products(self, products: List[Dict], query: str = "") -> List[Dict]:
@@ -83,7 +85,12 @@ class UniversalFraudDetector:
         for product in valid_products:
             if 'fraud_analysis' not in product:
                 product['fraud_analysis'] = self._get_default_analysis(product)
-        
+
+        # Step 5: Semantic duplicate detection across all valid products
+        if len(valid_products) >= 2:
+            self.duplicate_detector.flag_duplicates(valid_products)
+            print(f"🔁 Duplicate detection complete")
+
         return products
     
     def _calculate_risk(self, product: Dict, all_products: List[Dict]) -> Tuple[float, List[str]]:

@@ -8,6 +8,7 @@ from app.scraping.google_shopping import GoogleShoppingScraper
 from app.scraping.ebay import EbayScraper
 from app.models.fraud_detector import UniversalFraudDetector
 from app.models.evaluator import FraudDetectionEvaluator
+from app.utils.prediction_logger import PredictionLogger
 import os
 from dotenv import load_dotenv
 from typing import List, Dict, Optional
@@ -32,8 +33,9 @@ app.add_middleware(
 # Initialize scrapers
 google_scraper = GoogleShoppingScraper(api_key=os.getenv("SERPAPI_KEY"))
 ebay_scraper = EbayScraper(api_key=os.getenv("SERPAPI_KEY"))
-fraud_detector = UniversalFraudDetector()
-evaluator = FraudDetectionEvaluator()
+fraud_detector    = UniversalFraudDetector()
+evaluator         = FraudDetectionEvaluator()
+prediction_logger = PredictionLogger()
 
 def _generate_category_warning(query: str, valid_products: List[Dict], invalid_products: List[Dict]) -> Optional[str]:
     """Generate warnings about filtered products and search limitations"""
@@ -144,17 +146,23 @@ async def search_products(
         # Calculate statistics
         if valid_products:
             price_stats = fraud_detector.get_price_statistics(valid_products)
-            
+
             high_risk = [p for p in valid_products if p.get('risk_level') == 'HIGH']
             medium_risk = [p for p in valid_products if p.get('risk_level') == 'MEDIUM']
             low_risk = [p for p in valid_products if p.get('risk_level') == 'LOW']
-            
+
             recommendations = fraud_detector.get_smart_recommendations(valid_products)
+            duplicate_summary = fraud_detector.duplicate_detector.duplicate_summary(valid_products)
         else:
             price_stats = {}
             high_risk, medium_risk, low_risk = [], [], []
             recommendations = {}
-        
+            duplicate_summary = {"total_duplicates": 0, "duplicate_groups": 0, "cross_platform_pairs": 0, "groups": []}
+
+        # Log predictions for dataset growth
+        n_logged = prediction_logger.log_search(query, valid_products)
+        print(f"📝 Logged {n_logged} predictions")
+
         return {
             "query": query,
             "platforms_searched": platforms_searched,
@@ -169,6 +177,7 @@ async def search_products(
                 "medium_risk_count": len(medium_risk),
                 "low_risk_count": len(low_risk)
             },
+            "duplicate_summary": duplicate_summary,
             "products": valid_products,
             "invalid_products": invalid_products if not filter_invalid else [],
             "recommendations": recommendations
@@ -266,6 +275,15 @@ async def test_llm():
             "error": str(e),
             "traceback": traceback.format_exc()
         }
+
+@app.get("/api/logs/stats")
+async def prediction_log_stats(days: int = Query(default=7, ge=1, le=90)):
+    """
+    Aggregate statistics over the last N days of prediction logs.
+    Useful for monitoring drift and growing the retraining dataset.
+    """
+    return prediction_logger.recent_stats(days=days)
+
 
 @app.get("/api/evaluate")
 async def evaluate_model(

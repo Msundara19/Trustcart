@@ -36,6 +36,7 @@ notebooks/
 tests/
 
 # Generated datasets (large files — run scripts locally to regenerate)
+data/prediction_logs/
 data/synthetic_dataset.json
 data/raw_scraped.json
 data/validation_dataset.json
