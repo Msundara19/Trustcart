@@ -110,28 +110,18 @@ function sortedProducts() {
 
 function setSort(key) {
     activeSort = key;
-    renderSortBar();
+    // Update active button highlight
+    ['risk-asc','risk-desc','price-asc','price-desc'].forEach(k => {
+        document.getElementById(`btn-${k}`)
+            .classList.toggle('active-sort', k === key);
+    });
     renderResults(sortedProducts());
 }
 
 function renderSortBar() {
-    const bar = document.getElementById('sortBar');
-    bar.innerHTML = `
-        <div class="flex flex-wrap items-center gap-2 max-w-7xl mx-auto">
-            <span class="text-white/60 text-xs font-semibold uppercase tracking-wide mr-1">Sort by</span>
-            ${SORT_OPTIONS.map(o => `
-                <button onclick="setSort('${o.key}')"
-                    class="px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
-                        activeSort === o.key
-                        ? 'bg-white text-blue-700 shadow'
-                        : 'bg-white/10 text-white/80 hover:bg-white/20'
-                    }">
-                    ${o.label}
-                </button>
-            `).join('')}
-        </div>
-    `;
-    bar.classList.remove('hidden');
+    document.getElementById('sortBar').classList.remove('hidden');
+    // Reset to default active button
+    setSort(activeSort);
 }
 
 // ── Summary bar ───────────────────────────────────────────────────────

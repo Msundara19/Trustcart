@@ -114,6 +114,11 @@
 
         /* Input focus glow */
         .search-input:focus { box-shadow: 0 0 0 3px rgba(59,130,246,0.3); }
+
+        /* Sort buttons */
+        .sort-btn { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); }
+        .sort-btn:hover { background: rgba(255,255,255,0.2); }
+        .sort-btn.active-sort { background: white; color: #1d4ed8; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
     </style>
 </head>
 <body>
@@ -246,8 +251,16 @@
             <p class="text-blue-200 text-sm font-medium">Enter a product above to start real-time fraud analysis</p>
         </div>
 
-        <!-- ── SORT BAR ───────────────────────────────────────────────────── -->
-        <div id="sortBar" class="hidden px-6 mb-4"></div>
+        <!-- ── SORT / FILTER BAR ─────────────────────────────────────────── -->
+        <div id="sortBar" class="hidden px-6 mb-4">
+            <div class="flex flex-wrap items-center gap-2 max-w-7xl mx-auto">
+                <span class="text-white/60 text-xs font-semibold uppercase tracking-wide mr-1">Sort by</span>
+                <button id="btn-risk-asc"   onclick="setSort('risk-asc')"   class="sort-btn active-sort px-4 py-1.5 rounded-full text-xs font-bold transition-all">🛡 Safest first</button>
+                <button id="btn-risk-desc"  onclick="setSort('risk-desc')"  class="sort-btn px-4 py-1.5 rounded-full text-xs font-bold transition-all">⚠️ Riskiest first</button>
+                <button id="btn-price-asc"  onclick="setSort('price-asc')"  class="sort-btn px-4 py-1.5 rounded-full text-xs font-bold transition-all">💲 Price: Low → High</button>
+                <button id="btn-price-desc" onclick="setSort('price-desc')" class="sort-btn px-4 py-1.5 rounded-full text-xs font-bold transition-all">💰 Price: High → Low</button>
+            </div>
+        </div>
 
         <!-- ── SUMMARY BAR ─────────────────────────────────────────────── -->
         <div id="summaryBar" class="hidden px-6 mb-6 flex justify-center">
