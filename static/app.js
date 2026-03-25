@@ -1,147 +1,313 @@
 const API_BASE = window.location.origin;
 
-async function searchProducts() {
-    const query = document.getElementById('searchQuery').value.trim();
-    const platform = document.getElementById('platformSelect').value;
-    const numResults = document.getElementById('numResults').value;
-    const maxPrice = document.getElementById('maxPrice').value;
-    
-    if (!query) {
-        alert('Please enter a product name');
-        return;
-    }
+// ── Search ────────────────────────────────────────────────────────────
 
-    // Show loading
-    document.getElementById('emptyState').classList.add('hidden');
-    document.getElementById('resultsSection').classList.add('hidden');
-    document.getElementById('loadingState').classList.remove('hidden');
+async function searchProducts() {
+    const query     = document.getElementById('searchQuery').value.trim();
+    const platform  = document.getElementById('platformSelect').value;
+    const numResults = document.getElementById('numResults').value;
+    const maxPrice  = document.getElementById('maxPrice').value;
+
+    if (!query) { alert('Please enter a product name'); return; }
+
+    setLoading(true);
 
     try {
         let url = `${API_BASE}/api/search/${encodeURIComponent(query)}?platform=${platform}&num_results=${numResults}`;
-        
-        // Add max_price if specified
-        if (maxPrice && maxPrice > 0) {
-            url += `&max_price=${maxPrice}`;
-        }
-        
-        const response = await fetch(url);
-        const data = await response.json();
+        if (maxPrice && maxPrice > 0) url += `&max_price=${maxPrice}`;
 
-        // Hide loading, show results
-        document.getElementById('loadingState').classList.add('hidden');
-        document.getElementById('resultsSection').classList.remove('hidden');
+        const res  = await fetch(url);
+        const data = await res.json();
 
-        // Show filtering info if any
-        let countText = `Found ${data.products ? data.products.length : 0} products`;
-        if (data.filtered_out && data.filtered_out > 0) {
-            countText += ` (${data.filtered_out} filtered out)`;
-        }
-        document.getElementById('resultsCount').textContent = countText;
+        setLoading(false);
+        renderSummaryBar(data);
+        renderResults(data.products || []);
 
-        // Display results
-        if (data.products && data.products.length > 0) {
-            displayResults(data.products);
-        } else {
-            document.getElementById('resultsGrid').innerHTML = 
-                '<div class="col-span-full text-center py-8 text-gray-600">No products found</div>';
-        }
-    } catch (error) {
-        document.getElementById('loadingState').classList.add('hidden');
-        alert('Error fetching results. Please try again.');
-        console.error('Error:', error);
+    } catch (err) {
+        setLoading(false);
+        alert('Error fetching results. Check the console for details.');
+        console.error(err);
     }
 }
 
-function displayResults(products) {
-    const resultsGrid = document.getElementById('resultsGrid');
-    resultsGrid.innerHTML = '';
+// ── State helpers ─────────────────────────────────────────────────────
 
-    products.forEach(product => {
-        const card = createProductCard(product);
-        resultsGrid.appendChild(card);
-    });
+function setLoading(on) {
+    document.getElementById('loadingState').classList.toggle('hidden', !on);
+    document.getElementById('emptyState').classList.add('hidden');
+    document.getElementById('summaryBar').classList.add('hidden');
+    document.getElementById('resultsSection').classList.add('hidden');
+    document.getElementById('searchBtn').disabled = on;
 }
 
-function createProductCard(product) {
+// ── Summary bar ───────────────────────────────────────────────────────
+
+function renderSummaryBar(data) {
+    const rs   = data.risk_summary     || {};
+    const ps   = data.price_statistics || {};
+    const ds   = data.duplicate_summary || {};
+    const high = rs.high_risk_count    || 0;
+    const med  = rs.medium_risk_count  || 0;
+    const low  = rs.low_risk_count     || 0;
+    const total = high + med + low || 1;
+
+    const pct = (n, t) => Math.round((n / t) * 100);
+
+    document.getElementById('summaryBar').innerHTML = `
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+            <div class="flex flex-wrap gap-6 items-start">
+
+                <!-- Risk breakdown -->
+                <div class="flex-1 min-w-[200px]">
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Risk Breakdown</p>
+                    <div class="space-y-1.5">
+                        ${riskBar('HIGH',   high, total)}
+                        ${riskBar('MEDIUM', med,  total)}
+                        ${riskBar('LOW',    low,  total)}
+                    </div>
+                </div>
+
+                <!-- Price stats -->
+                ${ps.median ? `
+                <div class="flex-1 min-w-[160px]">
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Price Range</p>
+                    <p class="text-2xl font-bold text-gray-800">$${ps.median.toFixed(0)}<span class="text-sm font-normal text-gray-400"> median</span></p>
+                    <p class="text-xs text-gray-400 mt-1">$${ps.min.toFixed(0)} – $${ps.max.toFixed(0)} &nbsp;·&nbsp; σ $${ps.std_dev.toFixed(0)}</p>
+                </div>
+                ` : ''}
+
+                <!-- Counts -->
+                <div class="flex-1 min-w-[160px]">
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Results</p>
+                    <p class="text-2xl font-bold text-gray-800">${data.valid_products || 0}<span class="text-sm font-normal text-gray-400"> products</span></p>
+                    <p class="text-xs text-gray-400 mt-1">${(data.platforms_searched||[]).join(' + ')}${data.filtered_out ? ` · ${data.filtered_out} filtered` : ''}</p>
+                </div>
+
+                <!-- Duplicates -->
+                ${ds.duplicate_groups > 0 ? `
+                <div class="flex-1 min-w-[160px]">
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Duplicates</p>
+                    <p class="text-2xl font-bold text-purple-700">${ds.duplicate_groups}<span class="text-sm font-normal text-gray-400"> group${ds.duplicate_groups !== 1 ? 's' : ''}</span></p>
+                    <p class="text-xs text-gray-400 mt-1">${ds.total_duplicates} listings · ${ds.cross_platform_pairs} cross-platform</p>
+                </div>
+                ` : ''}
+
+            </div>
+            ${data.category_warning ? `<p class="mt-4 text-xs text-amber-700 bg-amber-50 rounded px-3 py-2">${data.category_warning}</p>` : ''}
+        </div>
+    `;
+
+    document.getElementById('summaryBar').classList.remove('hidden');
+}
+
+function riskBar(level, count, total) {
+    const colors = { HIGH: '#ef4444', MEDIUM: '#f59e0b', LOW: '#22c55e' };
+    const pct = Math.round((count / total) * 100);
+    return `
+        <div class="flex items-center gap-2">
+            <span class="text-xs w-14 text-gray-600">${level}</span>
+            <div class="bar-bg flex-1">
+                <div class="bar-fill" style="width:${pct}%;background:${colors[level]}"></div>
+            </div>
+            <span class="text-xs font-semibold text-gray-700 w-6 text-right">${count}</span>
+        </div>
+    `;
+}
+
+// ── Results grid ──────────────────────────────────────────────────────
+
+function renderResults(products) {
+    const grid = document.getElementById('resultsGrid');
+    grid.innerHTML = '';
+
+    if (!products.length) {
+        grid.innerHTML = '<div class="col-span-full text-center py-12 text-gray-400">No products found.</div>';
+    } else {
+        products.forEach((p, i) => {
+            const card = createCard(p);
+            card.style.animationDelay = `${i * 30}ms`;
+            card.classList.add('card-enter');
+            grid.appendChild(card);
+        });
+    }
+
+    document.getElementById('resultsSection').classList.remove('hidden');
+}
+
+// ── Card ──────────────────────────────────────────────────────────────
+
+function createCard(p) {
     const card = document.createElement('div');
-    card.className = 'bg-white rounded-lg shadow hover:shadow-lg transition-shadow border border-gray-200';
+    card.className = 'bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow flex flex-col';
 
-    // Get risk level from product
-    const riskLevel = product.risk_level || 'UNKNOWN';
-    const riskColors = {
-        'LOW': 'bg-green-50 border-green-200 text-green-800',
-        'MEDIUM': 'bg-yellow-50 border-yellow-200 text-yellow-800',
-        'HIGH': 'bg-red-50 border-red-200 text-red-800',
-        'UNKNOWN': 'bg-gray-50 border-gray-200 text-gray-800'
-    };
+    const riskLevel  = p.risk_level  || 'UNKNOWN';
+    const xgbLevel   = p.xgb_risk_level;
+    const xgbScore   = p.xgb_score;
+    const ruleScore  = p.risk_score  || 0;
+    const fa         = p.fraud_analysis || {};
+    const redFlags   = fa.red_flags  || [];
+    const link       = p.link || p.product_link || '';
 
-    // Get fraud analysis
-    const fraudAnalysis = product.fraud_analysis || {};
-    const reasoning = fraudAnalysis.reasoning || 'No analysis available';
-    const redFlags = fraudAnalysis.red_flags || [];
-    const recommendation = fraudAnalysis.recommendation || 'REVIEW CAREFULLY';
-
-    // FIXED: Check multiple possible link fields
-    const productLink = product.link || product.product_link || '';
+    // Conflict: rule says LOW but XGB says HIGH (or vice versa — show a warning)
+    const conflict = xgbLevel && riskLevel !== xgbLevel &&
+                     ((riskLevel === 'LOW' && xgbLevel === 'HIGH') ||
+                      (riskLevel === 'HIGH' && xgbLevel === 'LOW'));
 
     card.innerHTML = `
-        <div class="p-4">
-            ${product.thumbnail ? `
-                <img src="${product.thumbnail}" alt="${product.title}" 
-                     class="w-full h-48 object-contain mb-4 bg-gray-50 rounded">
-            ` : ''}
-            
-            <div class="mb-3">
-                <span class="inline-block px-3 py-1 rounded-full text-sm font-medium ${riskColors[riskLevel]}">
-                    ${riskLevel} RISK
+        <!-- Thumbnail -->
+        ${p.thumbnail ? `
+            <div class="relative">
+                <img src="${p.thumbnail}" alt="${escHtml(p.title)}"
+                     class="w-full h-44 object-contain bg-gray-50 rounded-t-xl p-2">
+                <!-- Platform badge -->
+                <span class="absolute top-2 right-2 pill" style="background:#1e293b;color:#f8fafc;font-size:0.65rem">
+                    ${p.platform === 'ebay' ? 'eBay' : 'Google'}
                 </span>
             </div>
+        ` : `
+            <div class="h-8 bg-gray-50 rounded-t-xl flex items-center justify-end px-3">
+                <span class="pill" style="background:#1e293b;color:#f8fafc;font-size:0.65rem">
+                    ${p.platform === 'ebay' ? 'eBay' : 'Google'}
+                </span>
+            </div>
+        `}
 
-            <h3 class="font-semibold text-gray-900 mb-2 line-clamp-2 min-h-[3rem]">${product.title}</h3>
-            
-            <div class="flex items-baseline justify-between mb-3">
-                <span class="text-2xl font-bold text-blue-600">$${product.price}</span>
-                <span class="text-sm text-gray-500">${product.source || 'Unknown'}</span>
+        <div class="p-4 flex flex-col flex-1 gap-3">
+
+            <!-- Title & price -->
+            <div>
+                <h3 class="font-semibold text-gray-900 text-sm leading-snug line-clamp-2 mb-1">${escHtml(p.title)}</h3>
+                <div class="flex items-baseline justify-between">
+                    <span class="text-xl font-bold text-blue-600">$${p.price != null ? p.price.toLocaleString() : '—'}</span>
+                    <span class="text-xs text-gray-400">${escHtml(p.source || '')}</span>
+                </div>
             </div>
 
-            ${product.condition ? `
-                <p class="text-sm text-gray-600 mb-3">Condition: <strong>${product.condition}</strong></p>
+            <!-- Risk badges row -->
+            <div class="flex flex-wrap gap-1.5 items-center">
+                <span class="pill risk-badge-${riskLevel}">
+                    ${riskIcon(riskLevel)} Rule: ${riskLevel}
+                </span>
+                ${xgbLevel ? `
+                <span class="pill risk-badge-${xgbLevel}">
+                    🤖 XGB: ${xgbLevel}
+                    ${xgbScore != null ? `<span class="opacity-60">${(xgbScore * 100).toFixed(0)}%</span>` : ''}
+                </span>
+                ` : ''}
+                ${p.duplicate_group != null ? `<span class="pill dup-badge">⬡ Dup #${p.duplicate_group}</span>` : ''}
+                ${p.is_cross_platform ? `<span class="pill cross-badge">↔ Cross-platform</span>` : ''}
+            </div>
+
+            <!-- Model conflict warning -->
+            ${conflict ? `
+            <div class="conflict-banner rounded px-3 py-2 text-xs text-amber-800">
+                ⚠️ Models disagree — rule-based says <strong>${riskLevel}</strong>, XGBoost says <strong>${xgbLevel}</strong>. Review carefully.
+            </div>
             ` : ''}
 
-            <div class="mb-3 pb-3 border-b border-gray-200">
-                <p class="text-sm text-gray-700">${reasoning}</p>
+            <!-- Score bars -->
+            <div class="space-y-1.5">
+                ${scoreLine('Rule score', ruleScore, riskLevel)}
+                ${xgbScore != null ? scoreLine('XGB score', xgbScore, xgbLevel) : ''}
             </div>
 
+            <!-- Price tier -->
+            ${p.price_tier ? `
+            <div class="flex items-center gap-2 text-xs text-gray-500">
+                <span>${tierEmoji(p.price_tier)}</span>
+                <span class="capitalize">${p.price_tier.replace('_', ' ')}</span>
+                <span class="ml-auto">p${p.price_percentile ?? '?'}</span>
+                <div class="bar-bg w-16">
+                    <div class="bar-fill" style="width:${p.price_percentile ?? 50}%;background:#6366f1"></div>
+                </div>
+            </div>
+            ` : ''}
+
+            <!-- Rating / reviews / condition -->
+            <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
+                ${p.rating > 0 ? `<span>★ ${p.rating}${p.reviews > 0 ? ` (${fmtNum(p.reviews)})` : ''}</span>` : '<span class="text-amber-600">No rating</span>'}
+                ${p.condition ? `<span>· ${p.condition}</span>` : ''}
+            </div>
+
+            <!-- AI reasoning -->
+            ${fa.reasoning ? `
+            <p class="text-xs text-gray-600 leading-relaxed border-t border-gray-100 pt-3">${escHtml(fa.reasoning)}</p>
+            ` : ''}
+
+            <!-- Red flags -->
             ${redFlags.length > 0 ? `
-                <div class="mb-3">
-                    <p class="text-sm font-semibold text-red-600 mb-2">⚠️ Red Flags:</p>
-                    <ul class="text-xs text-gray-600 space-y-1">
-                        ${redFlags.map(flag => `<li>• ${flag}</li>`).join('')}
-                    </ul>
-                </div>
+            <div>
+                <p class="text-xs font-semibold text-red-600 mb-1">⚠ Red flags</p>
+                <ul class="text-xs text-gray-600 space-y-0.5">
+                    ${redFlags.map(f => `<li>• ${escHtml(f)}</li>`).join('')}
+                </ul>
+            </div>
             ` : ''}
 
-            <div class="pt-3 border-t border-gray-200">
-                <p class="text-sm font-semibold text-gray-700 mb-2">Recommendation:</p>
-                <p class="text-sm ${
-                    recommendation.includes('SAFE') ? 'text-green-600' :
-                    recommendation.includes('CAUTION') ? 'text-yellow-600' :
-                    'text-red-600'
-                }">${recommendation}</p>
+            <!-- Similar-to (duplicate info) -->
+            ${(p.similar_to || []).length > 0 ? `
+            <div class="text-xs text-purple-700 bg-purple-50 rounded px-2 py-1.5">
+                Similar to: ${p.similar_to.map(s =>
+                    `<span class="font-medium">${escHtml(s.title.slice(0,40))}…</span> <span class="opacity-60">(${(s.similarity*100).toFixed(0)}%)</span>`
+                ).join(', ')}
+            </div>
+            ` : ''}
+
+            <!-- Recommendation + CTA -->
+            <div class="mt-auto pt-3 border-t border-gray-100 flex items-center justify-between gap-3">
+                <span class="text-xs font-bold ${recColor(fa.recommendation)}">${fa.recommendation || '—'}</span>
+                ${link ? `
+                    <a href="${link}" target="_blank" rel="noopener"
+                       class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors">
+                        View →
+                    </a>
+                ` : `
+                    <span class="px-4 py-1.5 bg-gray-100 text-gray-400 text-xs rounded-lg">No link</span>
+                `}
             </div>
 
-            ${productLink ? `
-                <a href="${productLink}" target="_blank" 
-                   class="mt-4 block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition-colors">
-                    View Listing →
-                </a>
-            ` : `
-                <div class="mt-4 block w-full text-center bg-gray-300 text-gray-600 font-medium py-2 px-4 rounded cursor-not-allowed">
-                    Link Not Available
-                </div>
-            `}
         </div>
     `;
 
     return card;
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────
+
+function riskIcon(level) {
+    return { HIGH: '🔴', MEDIUM: '🟡', LOW: '🟢' }[level] || '⚪';
+}
+
+function tierEmoji(tier) {
+    return { extremely_cheap: '🔻', budget: '💲', mid: '〰️', premium: '💎', luxury: '👑', outlier_high: '📈' }[tier] || '';
+}
+
+function recColor(rec) {
+    if (!rec) return 'text-gray-500';
+    if (rec.includes('SAFE'))    return 'text-green-600';
+    if (rec.includes('CAUTION')) return 'text-yellow-600';
+    return 'text-red-600';
+}
+
+function scoreLine(label, score, level) {
+    const colors = { HIGH: '#ef4444', MEDIUM: '#f59e0b', LOW: '#22c55e', UNKNOWN: '#9ca3af' };
+    const pct    = Math.min(Math.round(score * 100), 100);
+    return `
+        <div class="flex items-center gap-2 text-xs">
+            <span class="text-gray-400 w-20 shrink-0">${label}</span>
+            <div class="bar-bg flex-1">
+                <div class="bar-fill" style="width:${pct}%;background:${colors[level]||'#9ca3af'}"></div>
+            </div>
+            <span class="font-semibold ${level === 'HIGH' ? 'xgb-HIGH' : level === 'MEDIUM' ? 'xgb-MEDIUM' : 'xgb-LOW'} w-8 text-right">${pct}%</span>
+        </div>
+    `;
+}
+
+function fmtNum(n) {
+    if (n >= 1000) return (n / 1000).toFixed(0) + 'k';
+    return n;
+}
+
+function escHtml(str) {
+    return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }

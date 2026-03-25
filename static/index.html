@@ -3,113 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TrustCart - AI Fraud Detection</title>
+    <title>TrustCart — AI Fraud Detection</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .loader {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #3b82f6;
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+
+        .spinner {
+            border: 3px solid #e5e7eb;
+            border-top: 3px solid #2563eb;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
+            width: 36px;
+            height: 36px;
+            animation: spin 0.8s linear infinite;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .card-enter {
+            animation: fadeUp 0.3s ease forwards;
         }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .risk-badge-HIGH    { background:#fef2f2; color:#991b1b; border:1px solid #fca5a5; }
+        .risk-badge-MEDIUM  { background:#fffbeb; color:#92400e; border:1px solid #fcd34d; }
+        .risk-badge-LOW     { background:#f0fdf4; color:#166534; border:1px solid #86efac; }
+        .risk-badge-UNKNOWN { background:#f9fafb; color:#374151; border:1px solid #d1d5db; }
+
+        .xgb-HIGH    { color:#dc2626; }
+        .xgb-MEDIUM  { color:#d97706; }
+        .xgb-LOW     { color:#16a34a; }
+
+        .pill { display:inline-flex; align-items:center; gap:4px; border-radius:9999px;
+                padding:2px 10px; font-size:0.72rem; font-weight:600; letter-spacing:.03em; }
+
+        .bar-bg { background:#e5e7eb; border-radius:4px; height:6px; overflow:hidden; }
+        .bar-fill { height:100%; border-radius:4px; transition:width .4s ease; }
+
+        .conflict-banner {
+            background: linear-gradient(90deg, #fef3c7, #fef9ee);
+            border-left: 3px solid #f59e0b;
+        }
+
+        .dup-badge { background:#ede9fe; color:#5b21b6; border:1px solid #c4b5fd; }
+        .cross-badge { background:#dbeafe; color:#1e40af; border:1px solid #93c5fd; }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
-    <!-- Simple Header -->
-    <header class="bg-white shadow-sm border-b">
-        <div class="max-w-6xl mx-auto px-4 py-6">
-            <h1 class="text-3xl font-bold text-gray-900">TrustCart</h1>
-            <p class="text-gray-600 mt-1">AI-Powered Shopping Fraud Detection</p>
+
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">TrustCart</h1>
+                <p class="text-xs text-gray-500 mt-0.5">AI-Powered E-Commerce Fraud Detection</p>
+            </div>
+            <div class="flex gap-2 text-xs text-gray-500">
+                <span class="pill" style="background:#f0fdf4;color:#166534;border:1px solid #86efac">XGBoost</span>
+                <span class="pill" style="background:#eff6ff;color:#1e40af;border:1px solid #93c5fd">Groq LLM</span>
+                <span class="pill" style="background:#faf5ff;color:#5b21b6;border:1px solid #c4b5fd">Duplicate Detection</span>
+            </div>
         </div>
     </header>
 
-    <!-- Search Section -->
-    <main class="max-w-6xl mx-auto px-4 py-8">
-        <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Search Query</label>
-                    <input 
-                        type="text" 
-                        id="searchQuery" 
-                        placeholder="e.g., used cars, iphone 13, macbook..."
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                        onkeypress="if(event.key === 'Enter') searchProducts()"
-                    >
-                </div>
-                <div class="grid grid-cols-3 gap-3">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Platform</label>
-                        <select 
-                            id="platformSelect" 
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                        >
-                            <option value="all">All</option>
-                            <option value="google">Google</option>
-                            <option value="ebay">eBay</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Results</label>
-                        <select 
-                            id="numResults" 
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                        >
-                            <option value="10">10</option>
-                            <option value="20" selected>20</option>
-                            <option value="30">30</option>
-                            <option value="50">50</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Max Price</label>
-                        <input 
-                            type="number" 
-                            id="maxPrice" 
-                            placeholder="Any"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                        >
-                    </div>
-                </div>
+    <main class="max-w-7xl mx-auto px-6 py-8">
+
+        <!-- Search Bar -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+            <div class="flex flex-col md:flex-row gap-3">
+                <input
+                    type="text"
+                    id="searchQuery"
+                    placeholder="Search any product — iPhone, used cars, headphones..."
+                    class="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    onkeypress="if(event.key==='Enter') searchProducts()"
+                >
+                <select id="platformSelect" class="px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    <option value="all">All Platforms</option>
+                    <option value="google">Google Shopping</option>
+                    <option value="ebay">eBay</option>
+                </select>
+                <select id="numResults" class="px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    <option value="10">10 results</option>
+                    <option value="20" selected>20 results</option>
+                    <option value="30">30 results</option>
+                    <option value="50">50 results</option>
+                </select>
+                <input type="number" id="maxPrice" placeholder="Max price" class="w-32 px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                <button
+                    onclick="searchProducts()"
+                    id="searchBtn"
+                    class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors whitespace-nowrap"
+                >
+                    Analyze →
+                </button>
             </div>
-            <button 
-                onclick="searchProducts()"
-                class="w-full md:w-auto px-8 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-            >
-                Search & Analyze
-            </button>
         </div>
 
-        <!-- Loading State -->
-        <div id="loadingState" class="hidden text-center py-12">
-            <div class="loader mx-auto mb-4"></div>
-            <p class="text-gray-600">Analyzing products...</p>
+        <!-- Loading -->
+        <div id="loadingState" class="hidden flex flex-col items-center py-20 gap-4">
+            <div class="spinner"></div>
+            <p class="text-sm text-gray-500">Scraping listings and running fraud analysis...</p>
         </div>
 
-        <!-- Results Section -->
+        <!-- Empty -->
+        <div id="emptyState" class="flex flex-col items-center py-20 text-center">
+            <div class="text-5xl mb-4">🛒</div>
+            <h3 class="text-lg font-semibold text-gray-700">Search any product</h3>
+            <p class="text-sm text-gray-400 mt-1">TrustCart analyzes listings across Google Shopping and eBay in real time</p>
+        </div>
+
+        <!-- Summary Bar (hidden until results) -->
+        <div id="summaryBar" class="hidden mb-6"></div>
+
+        <!-- Results Grid -->
         <div id="resultsSection" class="hidden">
-            <div class="mb-6">
-                <h2 class="text-xl font-semibold text-gray-900" id="resultsCount"></h2>
-            </div>
-            <div id="resultsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Results will be inserted here -->
-            </div>
+            <div id="resultsGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"></div>
         </div>
 
-        <!-- Empty State -->
-        <div id="emptyState" class="text-center py-12">
-            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
-            <h3 class="mt-4 text-lg font-medium text-gray-900">Start Your Search</h3>
-            <p class="mt-2 text-gray-600">Enter a product name to analyze listings</p>
-        </div>
     </main>
 
     <script src="/static/app.js"></script>
