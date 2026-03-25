@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 from .fraud_detector import UniversalFraudDetector
+from .xgb_model import XGBFraudClassifier
 
 
 class FraudDetectionEvaluator:
@@ -23,7 +24,8 @@ class FraudDetectionEvaluator:
     DATA_DIR = Path(__file__).parent.parent.parent / "data"
 
     def __init__(self):
-        self.detector = UniversalFraudDetector()
+        self.detector        = UniversalFraudDetector()
+        self.xgb_classifier  = self.detector.xgb_classifier
 
     # ── Public API ────────────────────────────────────────────────────
 
@@ -64,8 +66,8 @@ class FraudDetectionEvaluator:
         y_scores = [p["predicted_score"] for p in scored]
         y_pred   = [1 if s >= threshold else 0 for s in y_scores]
 
-        metrics = self._compute_metrics(y_true, y_pred, y_scores)
-        metrics.update({
+        rule_metrics = self._compute_metrics(y_true, y_pred, y_scores)
+        rule_metrics.update({
             "threshold":          threshold,
             "dataset_size":       len(scored),
             "fraud_rate":         round(sum(y_true) / len(y_true), 3),
@@ -73,7 +75,30 @@ class FraudDetectionEvaluator:
             "threshold_analysis": self._threshold_analysis(y_true, y_scores),
             "evaluated_at":       datetime.utcnow().isoformat(),
         })
-        return metrics
+
+        # XGBoost evaluation (when model is available)
+        xgb_metrics = None
+        if self.xgb_classifier.enabled:
+            xgb_scores = self.xgb_classifier.predict_batch(scored)
+            xgb_pred   = [1 if s >= 0.5 else 0 for s in xgb_scores]
+            xgb_metrics = self._compute_metrics(y_true, xgb_pred, xgb_scores)
+            xgb_metrics.update({
+                "threshold":          0.5,
+                "dataset_size":       len(scored),
+                "fraud_rate":         round(sum(y_true) / len(y_true), 3),
+                "per_category":       self._per_category_metrics_xgb(scored, xgb_scores, xgb_pred),
+                "threshold_analysis": self._threshold_analysis(y_true, xgb_scores),
+                "feature_importance": self.xgb_classifier.feature_importance(),
+            })
+
+        result = {"rule_based": rule_metrics}
+        if xgb_metrics:
+            result["xgboost"]     = xgb_metrics
+            result["improvement"] = {
+                k: round(xgb_metrics[k] - rule_metrics[k], 4)
+                for k in ["precision", "recall", "f1", "accuracy", "auc"]
+            }
+        return result
 
     def evaluate_from_file(
         self,
@@ -108,6 +133,7 @@ class FraudDetectionEvaluator:
         result = self.evaluate(products, threshold=threshold, sample_size=sample_size)
         result["dataset_source"] = source if "source" in dir() else str(dataset_path.name)
         result["dataset_path"]   = str(dataset_path)
+        result["evaluated_at"]   = datetime.utcnow().isoformat()
         return result
 
     # ── Scoring ───────────────────────────────────────────────────────
@@ -200,6 +226,23 @@ class FraudDetectionEvaluator:
             y_pred   = [1 if s >= threshold else 0 for s in y_scores]
             m = self._compute_metrics(y_true, y_pred, y_scores)
             m["count"] = len(cat_products)
+            result[cat] = m
+        return result
+
+    def _per_category_metrics_xgb(
+        self, products: List[Dict], xgb_scores: List[float], xgb_pred: List[int]
+    ) -> Dict:
+        by_cat: Dict[str, list] = defaultdict(list)
+        for p, score, pred in zip(products, xgb_scores, xgb_pred):
+            by_cat[p.get("category", "unknown")].append((p, score, pred))
+
+        result = {}
+        for cat, items in by_cat.items():
+            y_true = [1 if i[0]["true_label"] == "fraud" else 0 for i in items]
+            scores = [i[1] for i in items]
+            preds  = [i[2] for i in items]
+            m = self._compute_metrics(y_true, preds, scores)
+            m["count"] = len(items)
             result[cat] = m
         return result
 

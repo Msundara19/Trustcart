@@ -110,7 +110,7 @@ class XGBFraudClassifier:
         if not self.enabled:
             return [None] * len(products)
         features = np.array([self.extract_features(p) for p in products])
-        return self.model.predict_proba(features)[:, 1].tolist()
+        return [float(s) for s in self.model.predict_proba(features)[:, 1]]
 
     # ── Introspection ─────────────────────────────────────────────────
 
@@ -119,7 +119,8 @@ class XGBFraudClassifier:
         if not self.enabled:
             return {}
         return dict(sorted(
-            zip(self.FEATURE_NAMES, self.model.feature_importances_),
+            {name: round(float(imp), 4)
+             for name, imp in zip(self.FEATURE_NAMES, self.model.feature_importances_)}.items(),
             key=lambda x: x[1],
             reverse=True,
         ))
