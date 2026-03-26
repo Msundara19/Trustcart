@@ -139,7 +139,7 @@ function renderSummaryBar(data) {
         <div class="flex flex-wrap gap-6 items-start">
 
             <div class="flex-1 min-w-[200px]">
-                <p class="text-xs font-semibold text-blue-200 uppercase tracking-wide mb-2">Safety Overview</p>
+                <p class="text-sm font-black text-white uppercase tracking-wide mb-2">Safety Overview</p>
                 <div class="space-y-1.5">
                     ${riskBar('HIGH',   high, total, '🔴 Avoid')}
                     ${riskBar('MEDIUM', med,  total, '🟡 Check first')}
@@ -149,23 +149,23 @@ function renderSummaryBar(data) {
 
             ${ps.median ? `
             <div class="flex-1 min-w-[160px]">
-                <p class="text-xs font-semibold text-blue-200 uppercase tracking-wide mb-2">Typical Price</p>
-                <p class="text-2xl font-bold text-white">$${ps.median.toFixed(0)}</p>
-                <p class="text-xs text-blue-300/70 mt-1">Range $${ps.min.toFixed(0)} – $${ps.max.toFixed(0)}</p>
+                <p class="text-sm font-black text-white uppercase tracking-wide mb-2">Typical Price</p>
+                <p class="text-3xl font-black text-white">$${ps.median.toFixed(0)}</p>
+                <p class="text-sm font-semibold text-white mt-1">Range $${ps.min.toFixed(0)} – $${ps.max.toFixed(0)}</p>
             </div>
             ` : ''}
 
             <div class="flex-1 min-w-[140px]">
-                <p class="text-xs font-semibold text-blue-200 uppercase tracking-wide mb-2">Listings Found</p>
-                <p class="text-2xl font-bold text-white">${data.valid_products || 0}</p>
-                <p class="text-xs text-blue-300/70 mt-1">${(data.platforms_searched||[]).map(s => s === 'google_shopping' ? 'Google' : 'eBay').join(' + ')}${data.filtered_out ? ` · ${data.filtered_out} removed` : ''}</p>
+                <p class="text-sm font-black text-white uppercase tracking-wide mb-2">Listings Found</p>
+                <p class="text-3xl font-black text-white">${data.valid_products || 0}</p>
+                <p class="text-sm font-semibold text-white mt-1">${(data.platforms_searched||[]).map(s => s === 'google_shopping' ? 'Google' : 'eBay').join(' + ')}${data.filtered_out ? ` · ${data.filtered_out} removed` : ''}</p>
             </div>
 
             ${ds.duplicate_groups > 0 ? `
             <div class="flex-1 min-w-[140px]">
-                <p class="text-xs font-semibold text-blue-200 uppercase tracking-wide mb-2">Same Item, Different Sellers</p>
-                <p class="text-2xl font-bold text-purple-300">${ds.total_duplicates}</p>
-                <p class="text-xs text-blue-300/70 mt-1">${ds.duplicate_groups} group${ds.duplicate_groups!==1?'s':''} · ${ds.cross_platform_pairs} cross-platform</p>
+                <p class="text-sm font-black text-white uppercase tracking-wide mb-2">Same Item, Different Sellers</p>
+                <p class="text-3xl font-black text-purple-300">${ds.total_duplicates}</p>
+                <p class="text-sm font-semibold text-white mt-1">${ds.duplicate_groups} group${ds.duplicate_groups!==1?'s':''} · ${ds.cross_platform_pairs} cross-platform</p>
             </div>
             ` : ''}
 
@@ -182,7 +182,7 @@ function riskBar(level, count, total, label) {
     const pct = Math.round((count / total) * 100);
     return `
         <div class="flex items-center gap-2">
-            <span class="text-xs w-28 text-blue-200">${label}</span>
+            <span class="text-sm font-bold text-white w-32">${label}</span>
             <div class="bar-bg flex-1"><div class="bar-fill" style="width:${pct}%;background:${colors[level]}"></div></div>
             <span class="text-sm font-black text-white w-8 text-right">${count}</span>
         </div>`;
