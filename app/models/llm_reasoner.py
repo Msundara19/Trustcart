@@ -181,13 +181,34 @@ Return JSON with exact fields:
     ) -> str:
         """Build focused prompt with key fraud signals"""
         
-        title = product.get('title', 'Unknown')
-        price = product.get('price', 0)
-        platform = product.get('platform', 'unknown')
-        rating = product.get('rating', 0)
-        reviews = product.get('reviews', 0)
-        condition = product.get('condition', 'unknown')
-        
+        title         = product.get('title', 'Unknown')
+        price         = product.get('price', 0)
+        platform      = product.get('platform', 'unknown')
+        rating        = product.get('rating', 0)
+        reviews       = product.get('reviews', 0)
+        condition     = product.get('condition', 'unknown')
+        quantity_sold = product.get('quantity_sold', 0) or 0
+        seller        = product.get('seller', {}) or {}
+        feedback_pct  = seller.get('feedback_pct', 0) or 0
+        seller_reviews = seller.get('reviews', 0) or 0
+
+        # Build seller reputation string — use eBay feedback when item rating is absent
+        if rating > 0:
+            seller_rep = f"{rating}/5 stars ({reviews} reviews)"
+        elif feedback_pct > 0:
+            seller_rep = f"No item rating — seller has {feedback_pct}% positive feedback ({seller_reviews:,} seller ratings)"
+        else:
+            seller_rep = "No rating or reviews available"
+
+        # Quantity sold context
+        sales_context = ""
+        if quantity_sold >= 500:
+            sales_context = f"HIGH SALES VOLUME: {quantity_sold:,} units sold — strong legitimacy signal"
+        elif quantity_sold >= 50:
+            sales_context = f"Moderate sales: {quantity_sold} units sold"
+        elif quantity_sold > 0:
+            sales_context = f"Low sales: only {quantity_sold} units sold"
+
         # Calculate price deviation
         price_context = ""
         if price_stats and price_stats.get('average'):
@@ -198,19 +219,22 @@ Return JSON with exact fields:
                     price_context = f"Price is {deviation}% below market average (${avg:.2f})"
                 else:
                     price_context = f"Price is {abs(deviation)}% above market average (${avg:.2f})"
-        
+
         prompt = f"""Analyze this listing for fraud:
 
 PRODUCT: {title}
 PRICE: ${price}
 CONDITION: {condition}
 PLATFORM: {platform}
-RATING: {rating}/5 ({reviews} reviews)
+SELLER REPUTATION: {seller_rep}
+{f"SALES VOLUME: {sales_context}" if sales_context else ""}
 PRELIMINARY RISK: {risk_level} (score: {risk_score:.2f})
 {price_context}
 
 DETECTED RISK FACTORS:
-{chr(10).join(f"- {factor}" for factor in risk_factors)}
+{chr(10).join(f"- {factor}" for factor in risk_factors) if risk_factors else "- None"}
+
+NOTE: If the seller has high positive feedback (>98%) and/or high sales volume (500+), weight these heavily as legitimacy signals even if the price appears low — used/refurbished items are naturally cheaper than new.
 
 Based on these factors, assign a calibrated scam_probability (0.0-1.0), list specific red_flags, provide reasoning, and give a recommendation."""
         

@@ -139,7 +139,7 @@ function renderSummaryBar(data) {
         <div class="flex flex-wrap gap-6 items-start">
 
             <div class="flex-1 min-w-[200px]">
-                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Safety Overview</p>
+                <p class="text-xs font-semibold text-blue-200 uppercase tracking-wide mb-2">Safety Overview</p>
                 <div class="space-y-1.5">
                     ${riskBar('HIGH',   high, total, '🔴 Avoid')}
                     ${riskBar('MEDIUM', med,  total, '🟡 Check first')}
@@ -149,28 +149,28 @@ function renderSummaryBar(data) {
 
             ${ps.median ? `
             <div class="flex-1 min-w-[160px]">
-                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Typical Price</p>
-                <p class="text-2xl font-bold text-gray-800">$${ps.median.toFixed(0)}</p>
-                <p class="text-xs text-gray-400 mt-1">Range $${ps.min.toFixed(0)} – $${ps.max.toFixed(0)}</p>
+                <p class="text-xs font-semibold text-blue-200 uppercase tracking-wide mb-2">Typical Price</p>
+                <p class="text-2xl font-bold text-white">$${ps.median.toFixed(0)}</p>
+                <p class="text-xs text-blue-300/70 mt-1">Range $${ps.min.toFixed(0)} – $${ps.max.toFixed(0)}</p>
             </div>
             ` : ''}
 
             <div class="flex-1 min-w-[140px]">
-                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Listings Found</p>
-                <p class="text-2xl font-bold text-gray-800">${data.valid_products || 0}</p>
-                <p class="text-xs text-gray-400 mt-1">${(data.platforms_searched||[]).map(s => s === 'google_shopping' ? 'Google' : 'eBay').join(' + ')}${data.filtered_out ? ` · ${data.filtered_out} removed` : ''}</p>
+                <p class="text-xs font-semibold text-blue-200 uppercase tracking-wide mb-2">Listings Found</p>
+                <p class="text-2xl font-bold text-white">${data.valid_products || 0}</p>
+                <p class="text-xs text-blue-300/70 mt-1">${(data.platforms_searched||[]).map(s => s === 'google_shopping' ? 'Google' : 'eBay').join(' + ')}${data.filtered_out ? ` · ${data.filtered_out} removed` : ''}</p>
             </div>
 
             ${ds.duplicate_groups > 0 ? `
             <div class="flex-1 min-w-[140px]">
-                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Same Item, Different Sellers</p>
-                <p class="text-2xl font-bold text-purple-700">${ds.total_duplicates}</p>
-                <p class="text-xs text-gray-400 mt-1">${ds.duplicate_groups} group${ds.duplicate_groups!==1?'s':''} · ${ds.cross_platform_pairs} cross-platform</p>
+                <p class="text-xs font-semibold text-blue-200 uppercase tracking-wide mb-2">Same Item, Different Sellers</p>
+                <p class="text-2xl font-bold text-purple-300">${ds.total_duplicates}</p>
+                <p class="text-xs text-blue-300/70 mt-1">${ds.duplicate_groups} group${ds.duplicate_groups!==1?'s':''} · ${ds.cross_platform_pairs} cross-platform</p>
             </div>
             ` : ''}
 
         </div>
-        ${data.category_warning ? `<p class="mt-4 text-xs text-amber-700 bg-amber-50 rounded px-3 py-2">${data.category_warning}</p>` : ''}
+        ${data.category_warning ? `<p class="mt-4 text-xs text-amber-300 rounded px-3 py-2" style="background:rgba(245,158,11,0.12);border:1px solid rgba(251,191,36,0.3)">${data.category_warning}</p>` : ''}
     `;
 
     document.getElementById('summaryBar').classList.remove('hidden');
@@ -178,13 +178,13 @@ function renderSummaryBar(data) {
 }
 
 function riskBar(level, count, total, label) {
-    const colors = { HIGH:'#ef4444', MEDIUM:'#f59e0b', LOW:'#22c55e' };
+    const colors = { HIGH:'#f87171', MEDIUM:'#fbbf24', LOW:'#4ade80' };
     const pct = Math.round((count / total) * 100);
     return `
         <div class="flex items-center gap-2">
-            <span class="text-xs w-28 text-gray-600">${label}</span>
+            <span class="text-xs w-28 text-blue-200">${label}</span>
             <div class="bar-bg flex-1"><div class="bar-fill" style="width:${pct}%;background:${colors[level]}"></div></div>
-            <span class="text-xs font-bold text-gray-700 w-5 text-right">${count}</span>
+            <span class="text-xs font-bold text-white w-5 text-right">${count}</span>
         </div>`;
 }
 
@@ -210,7 +210,7 @@ function renderResults(products) {
 
 function createCard(p) {
     const card = document.createElement('div');
-    card.className = 'bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition-shadow flex flex-col overflow-hidden';
+    card.className = 'glass rounded-xl overflow-hidden flex flex-col hover:shadow-2xl transition-shadow';
 
     // Use XGBoost level as primary signal when available
     const primaryLevel = p.xgb_risk_level || p.risk_level || 'UNKNOWN';
@@ -228,7 +228,7 @@ function createCard(p) {
     if (rec.includes('AVOID'))   trustPct = Math.min(trustPct, 20);
     else if (rec.includes('CAUTION')) trustPct = Math.min(trustPct, 55);
 
-    const trustColor = trustPct >= 75 ? '#16a34a' : trustPct >= 45 ? '#d97706' : '#dc2626';
+    const trustColor = trustPct >= 75 ? '#4ade80' : trustPct >= 45 ? '#fbbf24' : '#f87171';
 
     // Models disagree
     const conflict = p.xgb_risk_level && p.risk_level &&
@@ -251,7 +251,7 @@ function createCard(p) {
         <div style="height:4px;background:${trustColor};width:100%"></div>
 
         ${p.thumbnail ? `
-        <div class="relative bg-gray-50 p-2">
+        <div class="relative bg-black/20 p-2">
             <img src="${escHtml(p.thumbnail)}" alt="${escHtml(p.title)}"
                  class="w-full h-40 object-contain">
             <span class="absolute top-2 right-2 text-xs font-bold px-2 py-0.5 rounded-full text-white"
@@ -268,17 +268,17 @@ function createCard(p) {
 
             <!-- Title + price -->
             <div>
-                <h3 class="font-bold text-gray-900 text-sm leading-snug line-clamp-2 mb-1">${escHtml(p.title)}</h3>
+                <h3 class="font-bold text-white text-sm leading-snug line-clamp-2 mb-1">${escHtml(p.title)}</h3>
                 <div class="flex items-baseline justify-between">
-                    <span class="text-2xl font-black text-blue-600">$${p.price != null ? Number(p.price).toLocaleString() : '—'}</span>
-                    ${condLabel ? `<span class="text-xs text-gray-400 font-medium">${condLabel}</span>` : ''}
+                    <span class="text-2xl font-black text-cyan-400">$${p.price != null ? Number(p.price).toLocaleString() : '—'}</span>
+                    ${condLabel ? `<span class="text-xs text-blue-200/70 font-medium">${condLabel}</span>` : ''}
                 </div>
             </div>
 
             <!-- Trust meter -->
-            <div class="bg-gray-50 rounded-xl p-3">
+            <div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:12px;">
                 <div class="flex items-center justify-between mb-1.5">
-                    <span class="text-xs font-bold text-gray-600">Safety Score</span>
+                    <span class="text-xs font-bold text-blue-200">Safety Score</span>
                     <span class="text-sm font-black" style="color:${trustColor}">${trustPct}%</span>
                 </div>
                 <div class="bar-bg"><div class="bar-fill" style="width:${trustPct}%;background:${trustColor}"></div></div>
@@ -287,30 +287,31 @@ function createCard(p) {
 
             <!-- Models disagree -->
             ${conflict ? `
-            <div class="conflict-banner rounded-lg px-3 py-2 text-xs text-amber-800">
+            <div class="conflict-banner rounded-lg px-3 py-2 text-xs text-amber-300"
+                 style="background:rgba(245,158,11,0.12);border-left:3px solid #f59e0b">
                 ⚠️ Our two AI models gave different signals — double-check this listing before buying.
             </div>
             ` : ''}
 
             <!-- Price context -->
-            ${priceNote ? `<p class="text-xs text-gray-500">${priceNote}</p>` : ''}
+            ${priceNote ? `<p class="text-xs text-blue-200">${priceNote}</p>` : ''}
 
             <!-- Rating -->
-            <div class="flex items-center gap-3 text-xs text-gray-500">
+            <div class="flex items-center gap-3 text-xs text-blue-200">
                 ${ratingDisplay(p)}
-                ${p.source ? `<span class="text-gray-300">·</span><span class="truncate">${escHtml(p.source)}</span>` : ''}
+                ${p.source ? `<span class="text-white/25">·</span><span class="truncate text-blue-200/70">${escHtml(p.source)}</span>` : ''}
             </div>
 
             <!-- AI explanation -->
             ${fa.reasoning ? `
-            <p class="text-xs text-gray-600 leading-relaxed border-t border-gray-100 pt-3">${escHtml(fa.reasoning)}</p>
+            <p class="text-xs text-blue-100 leading-relaxed border-t pt-3" style="border-color:rgba(255,255,255,0.1)">${escHtml(fa.reasoning)}</p>
             ` : ''}
 
             <!-- Red flags in plain English -->
             ${redFlags.length > 0 ? `
-            <div class="bg-red-50 rounded-lg p-2.5">
-                <p class="text-xs font-bold text-red-600 mb-1">Things to watch out for</p>
-                <ul class="text-xs text-red-700 space-y-0.5">
+            <div style="background:rgba(220,38,38,0.15);border:1px solid rgba(248,113,113,0.3);border-radius:8px;padding:10px;">
+                <p class="text-xs font-bold text-red-400 mb-1">Things to watch out for</p>
+                <ul class="text-xs text-red-300 space-y-0.5">
                     ${redFlags.map(f => `<li>• ${friendlyFlag(f)}</li>`).join('')}
                 </ul>
             </div>
@@ -318,24 +319,24 @@ function createCard(p) {
 
             <!-- Duplicate / cross-platform notice -->
             ${p.is_cross_platform ? `
-            <div class="bg-blue-50 rounded-lg px-3 py-2 text-xs text-blue-700">
+            <div style="background:rgba(59,130,246,0.15);border:1px solid rgba(96,165,250,0.3);border-radius:8px;" class="px-3 py-2 text-xs text-blue-300">
                 🔁 This item appears on multiple platforms — compare prices before buying.
             </div>
             ` : p.duplicate_group != null ? `
-            <div class="bg-purple-50 rounded-lg px-3 py-2 text-xs text-purple-700">
+            <div style="background:rgba(139,92,246,0.15);border:1px solid rgba(167,139,250,0.3);border-radius:8px;" class="px-3 py-2 text-xs text-purple-300">
                 👯 Multiple sellers listing the same item — you may find a better deal elsewhere.
             </div>
             ` : ''}
 
             <!-- CTA -->
-            <div class="mt-auto pt-3 border-t border-gray-100 flex items-center justify-between gap-3">
+            <div class="mt-auto pt-3 flex items-center justify-between gap-3" style="border-top:1px solid rgba(255,255,255,0.1)">
                 <span class="text-xs font-black ${recBadgeClass(fa.recommendation)}">${friendlyRec(fa.recommendation)}</span>
                 ${link ? `
                     <a href="${link}" target="_blank" rel="noopener"
-                       class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-colors">
+                       class="px-5 py-2 bg-blue-500 hover:bg-blue-400 text-white text-xs font-bold rounded-lg transition-colors">
                         View listing →
                     </a>
-                ` : `<span class="text-xs text-gray-300">No link</span>`}
+                ` : `<span class="text-xs text-white/25">No link</span>`}
             </div>
 
         </div>
@@ -347,8 +348,9 @@ function createCard(p) {
 // ── User-friendly helpers ─────────────────────────────────────────────
 
 function safetyVerdict(level, pct) {
-    if (level === 'LOW')    return '✅ Looks legitimate — safe to consider';
-    if (level === 'MEDIUM') return '⚠️ Some concerns — verify before buying';
+    // Drive verdict from trustPct so bar and text are always consistent
+    if (pct >= 70) return '✅ Looks legitimate — safe to consider';
+    if (pct >= 40) return '⚠️ Some concerns — verify before buying';
     return '🚫 High risk — we recommend avoiding this';
 }
 
@@ -360,20 +362,24 @@ function friendlyRec(rec) {
 }
 
 function recBadgeClass(rec) {
-    if (!rec) return 'text-gray-400';
-    if (rec.includes('SAFE'))    return 'text-green-600';
-    if (rec.includes('CAUTION')) return 'text-yellow-600';
-    return 'text-red-600';
+    if (!rec) return 'text-white/40';
+    if (rec.includes('SAFE'))    return 'text-green-400';
+    if (rec.includes('CAUTION')) return 'text-yellow-400';
+    return 'text-red-400';
 }
 
 function priceContext(p) {
     if (!p.price_tier) return '';
-    const pct = p.price_percentile;
+    const isUsed = p.condition === 'used' || p.condition === 'refurbished';
     switch (p.price_tier) {
         case 'extremely_cheap':
-            return `🔻 Priced ${pct != null ? Math.round(100 - pct) + '% cheaper' : 'much cheaper'} than similar listings — investigate why`;
+            if (isUsed)
+                return `🔻 Much cheaper than other listings — expected for older/used models, but verify condition`;
+            return `🔻 Price is suspiciously low — investigate before buying`;
         case 'budget':
-            return `💲 Below-average price — worth verifying condition`;
+            return isUsed
+                ? `💲 Good price for a used item — verify condition and seller`
+                : `💲 Below-average price — worth verifying condition`;
         case 'mid':
             return `〰️ Fairly priced compared to similar listings`;
         case 'premium':
@@ -411,14 +417,14 @@ function ratingDisplay(p) {
     const sellerReviews = seller.reviews;
 
     if (p.rating > 0) {
-        return `<span>⭐ ${p.rating}${p.reviews > 0 ? ` <span class="text-gray-400">(${fmtNum(p.reviews)})</span>` : ''}</span>`;
+        return `<span>⭐ ${p.rating}${p.reviews > 0 ? ` <span class="text-blue-300/60">(${fmtNum(p.reviews)})</span>` : ''}</span>`;
     }
     // eBay: use seller feedback % as proxy
     if (feedbackPct > 0) {
-        const color = feedbackPct >= 98 ? 'text-green-600' : feedbackPct >= 95 ? 'text-yellow-600' : 'text-red-500';
-        return `<span class="${color} font-medium">👤 ${feedbackPct}% positive${sellerReviews > 0 ? ` <span class="text-gray-400">(${fmtNum(sellerReviews)} seller ratings)</span>` : ''}</span>`;
+        const color = feedbackPct >= 98 ? 'text-green-400' : feedbackPct >= 95 ? 'text-yellow-400' : 'text-red-400';
+        return `<span class="${color} font-medium">👤 ${feedbackPct}% positive${sellerReviews > 0 ? ` <span class="text-blue-300/60">(${fmtNum(sellerReviews)} seller ratings)</span>` : ''}</span>`;
     }
-    return `<span class="text-amber-600 font-medium">⚠ No reviews yet</span>`;
+    return `<span class="text-amber-400 font-medium">⚠ No reviews yet</span>`;
 }
 
 // ── Misc helpers ──────────────────────────────────────────────────────
