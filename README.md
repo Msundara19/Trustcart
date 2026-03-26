@@ -10,8 +10,8 @@
 > TrustCart is a real-time fraud detection system for e-commerce listings. It combines a trained XGBoost classifier, statistical anomaly scoring, Groq LLM reasoning, and semantic duplicate detection to surface risky listings from Google Shopping and eBay — before you buy.
 
 **[Live Demo](https://web-production-e61ac.up.railway.app/)** · **[API Docs](https://web-production-e61ac.up.railway.app/docs)**
+<img width="1066" height="789" alt="image" src="https://github.com/user-attachments/assets/6ed6fb54-38d5-4804-aad5-f903912a948d" />
 
-<img width="575" height="436" alt="TrustCart UI" src="https://github.com/user-attachments/assets/58ecea66-6cf0-4ec0-bda2-bd94fd808cea" />
 
 ---
 
