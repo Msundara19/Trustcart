@@ -136,41 +136,47 @@ function renderSummaryBar(data) {
     const total = high + med + low || 1;
 
     document.getElementById('summaryContent').innerHTML = `
-        <div class="flex flex-wrap gap-6 items-start">
+        <div class="flex flex-wrap gap-8 items-start">
 
-            <div class="flex-1 min-w-[200px]">
-                <p class="text-sm font-black text-white uppercase tracking-wide mb-2">Safety Overview</p>
-                <div class="space-y-1.5">
+            <!-- Safety bars -->
+            <div class="flex-1 min-w-[220px]">
+                <p class="text-xs font-bold text-white/50 uppercase tracking-widest mb-3">Safety Overview</p>
+                <div class="space-y-2">
                     ${riskBar('HIGH',   high, total, '🔴 Avoid')}
                     ${riskBar('MEDIUM', med,  total, '🟡 Check first')}
                     ${riskBar('LOW',    low,  total, '🟢 Looks safe')}
                 </div>
             </div>
 
+            <!-- Divider -->
+            <div style="width:1px;background:rgba(255,255,255,0.1);align-self:stretch" class="hidden sm:block"></div>
+
             ${ps.median ? `
-            <div class="flex-1 min-w-[160px]">
-                <p class="text-sm font-black text-white uppercase tracking-wide mb-2">Typical Price</p>
-                <p class="text-3xl font-black text-white">$${ps.median.toFixed(0)}</p>
-                <p class="text-sm font-semibold text-white mt-1">Range $${ps.min.toFixed(0)} – $${ps.max.toFixed(0)}</p>
+            <div class="flex-1 min-w-[130px]">
+                <p class="text-xs font-bold text-white/50 uppercase tracking-widest mb-3">Typical Price</p>
+                <p class="text-4xl font-black text-white leading-none">$${ps.median.toFixed(0)}</p>
+                <p class="text-sm text-white/60 mt-2">$${ps.min.toFixed(0)} – $${ps.max.toFixed(0)}</p>
             </div>
+            <div style="width:1px;background:rgba(255,255,255,0.1);align-self:stretch" class="hidden sm:block"></div>
             ` : ''}
 
-            <div class="flex-1 min-w-[140px]">
-                <p class="text-sm font-black text-white uppercase tracking-wide mb-2">Listings Found</p>
-                <p class="text-3xl font-black text-white">${data.valid_products || 0}</p>
-                <p class="text-sm font-semibold text-white mt-1">${(data.platforms_searched||[]).map(s => s === 'google_shopping' ? 'Google' : 'eBay').join(' + ')}${data.filtered_out ? ` · ${data.filtered_out} removed` : ''}</p>
+            <div class="flex-1 min-w-[110px]">
+                <p class="text-xs font-bold text-white/50 uppercase tracking-widest mb-3">Listings Found</p>
+                <p class="text-4xl font-black text-white leading-none">${data.valid_products || 0}</p>
+                <p class="text-sm text-white/60 mt-2">${(data.platforms_searched||[]).map(s => s === 'google_shopping' ? 'Google' : 'eBay').join(' + ')}${data.filtered_out ? ` · ${data.filtered_out} filtered` : ''}</p>
             </div>
 
             ${ds.duplicate_groups > 0 ? `
-            <div class="flex-1 min-w-[140px]">
-                <p class="text-sm font-black text-white uppercase tracking-wide mb-2">Same Item, Different Sellers</p>
-                <p class="text-3xl font-black text-purple-300">${ds.total_duplicates}</p>
-                <p class="text-sm font-semibold text-white mt-1">${ds.duplicate_groups} group${ds.duplicate_groups!==1?'s':''} · ${ds.cross_platform_pairs} cross-platform</p>
+            <div style="width:1px;background:rgba(255,255,255,0.1);align-self:stretch" class="hidden sm:block"></div>
+            <div class="flex-1 min-w-[130px]">
+                <p class="text-xs font-bold text-white/50 uppercase tracking-widest mb-3">Duplicate Listings</p>
+                <p class="text-4xl font-black text-purple-300 leading-none">${ds.total_duplicates}</p>
+                <p class="text-sm text-white/60 mt-2">${ds.duplicate_groups} group${ds.duplicate_groups!==1?'s':''} · ${ds.cross_platform_pairs} cross-platform</p>
             </div>
             ` : ''}
 
         </div>
-        ${data.category_warning ? `<p class="mt-4 text-xs text-amber-300 rounded px-3 py-2" style="background:rgba(245,158,11,0.12);border:1px solid rgba(251,191,36,0.3)">${data.category_warning}</p>` : ''}
+        ${data.category_warning ? `<p class="mt-5 text-sm text-amber-200 rounded-lg px-4 py-2.5 font-medium" style="background:rgba(245,158,11,0.15);border:1px solid rgba(251,191,36,0.25)">${data.category_warning}</p>` : ''}
     `;
 
     document.getElementById('summaryBar').classList.remove('hidden');
@@ -181,10 +187,12 @@ function riskBar(level, count, total, label) {
     const colors = { HIGH:'#f87171', MEDIUM:'#fbbf24', LOW:'#4ade80' };
     const pct = Math.round((count / total) * 100);
     return `
-        <div class="flex items-center gap-2">
-            <span class="text-sm font-bold text-white w-32">${label}</span>
-            <div class="bar-bg flex-1"><div class="bar-fill" style="width:${pct}%;background:${colors[level]}"></div></div>
-            <span class="text-sm font-black text-white w-8 text-right">${count}</span>
+        <div class="flex items-center gap-3">
+            <span class="text-sm font-semibold text-white w-32 shrink-0">${label}</span>
+            <div class="bar-bg flex-1" style="height:6px;border-radius:6px;background:rgba(255,255,255,0.12)">
+                <div style="height:100%;border-radius:6px;width:${pct}%;background:${colors[level]};transition:width .5s ease"></div>
+            </div>
+            <span class="text-base font-black text-white w-8 text-right shrink-0">${count}</span>
         </div>`;
 }
 
@@ -210,7 +218,7 @@ function renderResults(products) {
 
 function createCard(p) {
     const card = document.createElement('div');
-    card.className = 'glass rounded-xl overflow-hidden flex flex-col hover:shadow-2xl transition-shadow';
+    card.className = 'glass-panel rounded-xl overflow-hidden flex flex-col hover:shadow-2xl transition-shadow';
 
     // Use XGBoost level as primary signal when available
     const primaryLevel = p.xgb_risk_level || p.risk_level || 'UNKNOWN';
@@ -268,21 +276,23 @@ function createCard(p) {
 
             <!-- Title + price -->
             <div>
-                <h3 class="font-bold text-white text-sm leading-snug line-clamp-2 mb-1">${escHtml(p.title)}</h3>
-                <div class="flex items-baseline justify-between">
-                    <span class="text-2xl font-black text-cyan-400">$${p.price != null ? Number(p.price).toLocaleString() : '—'}</span>
-                    ${condLabel ? `<span class="text-xs text-blue-200/70 font-medium">${condLabel}</span>` : ''}
+                <h3 class="font-bold text-white text-sm leading-snug line-clamp-2 mb-2">${escHtml(p.title)}</h3>
+                <div class="flex items-baseline gap-3">
+                    <span class="text-3xl font-black text-cyan-300">$${p.price != null ? Number(p.price).toLocaleString() : '—'}</span>
+                    ${condLabel ? `<span class="text-xs font-semibold px-2 py-0.5 rounded-full text-white/70" style="background:rgba(255,255,255,0.1)">${condLabel}</span>` : ''}
                 </div>
             </div>
 
             <!-- Trust meter -->
-            <div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:12px;">
-                <div class="flex items-center justify-between mb-1.5">
-                    <span class="text-xs font-bold text-blue-200">Safety Score</span>
-                    <span class="text-sm font-black" style="color:${trustColor}">${trustPct}%</span>
+            <div style="background:rgba(255,255,255,0.06);border-radius:10px;padding:12px 14px;">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold text-white/60 uppercase tracking-wide">Safety Score</span>
+                    <span class="text-xl font-black" style="color:${trustColor}">${trustPct}%</span>
                 </div>
-                <div class="bar-bg"><div class="bar-fill" style="width:${trustPct}%;background:${trustColor}"></div></div>
-                <p class="text-xs mt-1.5 font-semibold" style="color:${trustColor}">${safetyVerdict(primaryLevel, trustPct)}</p>
+                <div style="height:6px;border-radius:6px;background:rgba(255,255,255,0.12);overflow:hidden">
+                    <div style="height:100%;border-radius:6px;width:${trustPct}%;background:${trustColor};transition:width .5s ease"></div>
+                </div>
+                <p class="text-sm font-semibold mt-2" style="color:${trustColor}">${safetyVerdict(primaryLevel, trustPct)}</p>
             </div>
 
             <!-- Models disagree -->
@@ -294,17 +304,17 @@ function createCard(p) {
             ` : ''}
 
             <!-- Price context -->
-            ${priceNote ? `<p class="text-xs text-blue-200">${priceNote}</p>` : ''}
+            ${priceNote ? `<p class="text-sm text-white/65">${priceNote}</p>` : ''}
 
             <!-- Rating -->
-            <div class="flex items-center gap-3 text-xs text-blue-200">
+            <div class="flex items-center gap-3 text-sm text-white/70">
                 ${ratingDisplay(p)}
-                ${p.source ? `<span class="text-white/25">·</span><span class="truncate text-blue-200/70">${escHtml(p.source)}</span>` : ''}
+                ${p.source ? `<span class="text-white/20">·</span><span class="truncate">${escHtml(p.source)}</span>` : ''}
             </div>
 
             <!-- AI explanation -->
             ${fa.reasoning ? `
-            <p class="text-xs text-blue-100 leading-relaxed border-t pt-3" style="border-color:rgba(255,255,255,0.1)">${escHtml(fa.reasoning)}</p>
+            <p class="text-sm text-white/75 leading-relaxed border-t pt-3" style="border-color:rgba(255,255,255,0.1)">${escHtml(fa.reasoning)}</p>
             ` : ''}
 
             <!-- Red flags in plain English -->
