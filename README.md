@@ -213,6 +213,8 @@ TF-IDF vectorization over preprocessed listing titles (unit normalization, color
 curl "https://web-production-e61ac.up.railway.app/api/search/iphone%2013?platform=ebay&num_results=10&max_price=500"
 ```
 
+> Interactive API explorer: [web-production-e61ac.up.railway.app/docs](https://web-production-e61ac.up.railway.app/docs)
+
 **Per-product response fields:**
 
 | Field | Description |
@@ -234,18 +236,13 @@ curl "https://web-production-e61ac.up.railway.app/api/search/iphone%2013?platfor
 
 Side-by-side model comparison on 714 real listings. Returns precision, recall, F1, AUC, confusion matrix, per-category breakdown, threshold sensitivity, and XGBoost feature importances.
 
-```bash
-curl "https://web-production-e61ac.up.railway.app/api/evaluate"
-```
-
 ### Other Endpoints
 
 | Endpoint | Description |
 |----------|-------------|
-| `GET /api/health` | System status, model availability |
-| `GET /api/platforms` | Supported platforms and capabilities |
-| `GET /api/test-llm` | Validate Groq LLM connectivity |
-| `GET /api/logs/stats?days=7` | Prediction log stats (fraud rate, volume) |
+| `GET /api/health` | System status and model availability |
+| `GET /api/platforms` | Supported platforms and their capabilities |
+| `GET /api/logs/stats?days=7` | Prediction log stats — fraud rate, search volume |
 
 ---
 
@@ -301,29 +298,31 @@ python data/llm_labeler.py
 # Train XGBoost and save model
 python data/train_model.py
 
-# Verify performance
+# Verify performance (local)
 curl "http://localhost:8000/api/evaluate"
 ```
 
 ---
 
-## Quick Test Cases
+## Try It Live
+
+The API is publicly available. No authentication required.
 
 ```bash
-# Standard search — both platforms
-curl "http://localhost:8000/api/search/iphone%2013?num_results=20"
+# Search across both platforms
+curl "https://web-production-e61ac.up.railway.app/api/search/iphone%2013?num_results=20"
 
 # High-risk category
-curl "http://localhost:8000/api/search/used%20cars%20under%205000?platform=ebay"
+curl "https://web-production-e61ac.up.railway.app/api/search/used%20cars%20under%205000?platform=ebay"
 
-# Trusted sellers — expect LOW risk
-curl "http://localhost:8000/api/search/dyson%20hair%20dryer?platform=google"
+# Trusted retailers — expect LOW risk
+curl "https://web-production-e61ac.up.railway.app/api/search/dyson%20hair%20dryer?platform=google"
 
-# Low-value items — verify outlier handling
-curl "http://localhost:8000/api/search/marvel%20comic%20books"
+# Model benchmark (XGBoost vs rule-based)
+curl "https://web-production-e61ac.up.railway.app/api/evaluate"
 
-# Model benchmark
-curl "http://localhost:8000/api/evaluate"
+# Health check
+curl "https://web-production-e61ac.up.railway.app/api/health"
 ```
 
 ---

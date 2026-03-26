@@ -15,10 +15,16 @@ from typing import List, Dict, Optional
 
 load_dotenv()
 
+# On Railway, RAILWAY_PUBLIC_DOMAIN is set automatically.
+# This ensures Swagger UI calls HTTPS instead of HTTP (mixed-content fix).
+_railway_domain = os.getenv("RAILWAY_PUBLIC_DOMAIN")
+_servers = [{"url": f"https://{_railway_domain}", "description": "Production"}] if _railway_domain else []
+
 app = FastAPI(
     title="TrustCart - Universal Shopping Fraud Detector",
     description="AI-powered fraud detection for ANY product category across multiple platforms",
-    version="2.0"
+    version="2.0",
+    servers=_servers or None,
 )
 
 # Add CORS middleware
