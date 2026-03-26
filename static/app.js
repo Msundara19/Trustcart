@@ -184,7 +184,7 @@ function riskBar(level, count, total, label) {
         <div class="flex items-center gap-2">
             <span class="text-xs w-28 text-blue-200">${label}</span>
             <div class="bar-bg flex-1"><div class="bar-fill" style="width:${pct}%;background:${colors[level]}"></div></div>
-            <span class="text-xs font-bold text-white w-5 text-right">${count}</span>
+            <span class="text-sm font-black text-white w-8 text-right">${count}</span>
         </div>`;
 }
 
