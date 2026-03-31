@@ -4,281 +4,329 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TrustCart — AI Fraud Detection</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        * { font-family: 'Times New Roman', Times, serif; }
+        *, *::before, *::after { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
 
         body {
-            background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 35%, #1d4ed8 65%, #0ea5e9 100%);
+            background: #070d1a;
             min-height: 100vh;
+            color: #e2eeff;
         }
 
-        /* Animated gradient orbs in background */
+        /* Radial mesh background */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 90% 55% at 50% -5%, rgba(59,130,246,0.14) 0%, transparent 65%),
+                radial-gradient(ellipse 55% 45% at 88% 88%, rgba(99,102,241,0.09) 0%, transparent 55%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Subtle background orbs */
         .bg-orb {
             position: fixed;
             border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.18;
+            filter: blur(110px);
+            opacity: 0.07;
             pointer-events: none;
-            animation: drift 12s ease-in-out infinite alternate;
+            animation: drift 18s ease-in-out infinite alternate;
         }
-        .bg-orb-1 { width:500px;height:500px;background:#3b82f6;top:-100px;left:-100px;animation-delay:0s; }
-        .bg-orb-2 { width:400px;height:400px;background:#0ea5e9;bottom:-80px;right:-80px;animation-delay:-4s; }
-        .bg-orb-3 { width:300px;height:300px;background:#6366f1;top:40%;left:55%;animation-delay:-8s; }
-
+        .bg-orb-1 { width: 700px; height: 700px; background: #3b82f6; top: -250px; left: -200px; }
+        .bg-orb-2 { width: 500px; height: 500px; background: #6366f1; bottom: -150px; right: -150px; animation-delay: -9s; }
         @keyframes drift {
-            from { transform: translate(0,0) scale(1); }
-            to   { transform: translate(40px,30px) scale(1.1); }
+            from { transform: translate(0, 0); }
+            to   { transform: translate(25px, 15px); }
         }
 
-        /* Glass card */
-        .glass {
-            background: rgba(255,255,255,0.07);
-            backdrop-filter: blur(18px);
-            -webkit-backdrop-filter: blur(18px);
-            border: 1px solid rgba(255,255,255,0.15);
-        }
-        /* Higher-contrast panel for summary/search areas */
-        .glass-panel {
-            background: rgba(5,15,40,0.55);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.12);
-        }
-        .glass-white {
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(18px);
-            border: 1px solid rgba(255,255,255,0.4);
+        /* Surface panel */
+        .surface {
+            background: rgba(12, 22, 45, 0.72);
+            backdrop-filter: blur(22px);
+            -webkit-backdrop-filter: blur(22px);
+            border: 1px solid rgba(255,255,255,0.08);
         }
 
-        /* Logo pulse ring */
+        /* Card */
+        .product-card {
+            background: rgba(13, 24, 48, 0.8);
+            border: 1px solid rgba(255,255,255,0.08);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+        }
+        .product-card:hover {
+            border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+            transform: translateY(-1px);
+        }
+
+        /* Logo ring */
         .logo-ring {
-            position:relative;
-            display:inline-flex;
-            align-items:center;
-            justify-content:center;
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
         .logo-ring::before {
-            content:'';
-            position:absolute;
-            inset:-8px;
-            border-radius:50%;
-            background: conic-gradient(from 0deg, #3b82f6, #0ea5e9, #6366f1, #3b82f6);
-            animation: spin-ring 4s linear infinite;
-            opacity:0.6;
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, #3b82f6, #6366f1, #0ea5e9, #3b82f6);
+            animation: spin-ring 5s linear infinite;
+            opacity: 0.65;
         }
         .logo-ring::after {
-            content:'';
-            position:absolute;
-            inset:-4px;
-            border-radius:50%;
-            background: linear-gradient(135deg,#1e3a5f,#0f172a);
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 50%;
+            background: #070d1a;
         }
         @keyframes spin-ring { to { transform: rotate(360deg); } }
 
-        /* Loading stages animation */
-        .stage { opacity:0; transform:translateX(-8px); transition: all 0.4s ease; }
-        .stage.active { opacity:1; transform:translateX(0); }
-        .stage.done { opacity:0.4; }
-
-        /* Scanning bar */
-        .scan-bar {
-            height:3px;
-            background:linear-gradient(90deg,transparent,#38bdf8,#818cf8,transparent);
-            background-size:200% 100%;
-            animation: scan 1.5s ease-in-out infinite;
+        /* Input fields */
+        .field {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.09);
+            color: #e2eeff;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
-        @keyframes scan { 0%{background-position:200%} 100%{background-position:-200%} }
+        .field:focus {
+            border-color: rgba(59,130,246,0.5);
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+        }
+        .field::placeholder { color: rgba(180,210,255,0.28); }
 
-        /* Pulse dots */
-        .dot { display:inline-block; border-radius:50%; animation: pulse-dot 1.2s ease-in-out infinite; }
-        .dot:nth-child(2){animation-delay:.2s}
-        .dot:nth-child(3){animation-delay:.4s}
-        @keyframes pulse-dot { 0%,100%{transform:scale(.6);opacity:.4} 50%{transform:scale(1);opacity:1} }
+        /* Select arrow */
+        select.field {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath fill='%236b7fa8' d='M0 0l5 7 5-7z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 30px !important;
+        }
 
-        /* Counter ticker */
-        @keyframes countUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
-        .count-tick { animation: countUp 0.3s ease forwards; }
+        /* Loading stages */
+        .stage { opacity: 0; transform: translateX(-8px); transition: all 0.4s ease; }
+        .stage.active { opacity: 1; transform: translateX(0); }
+        .stage.done { opacity: 0.28; }
+
+        /* Scan bar */
+        .scan-bar {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #3b82f6, #818cf8, transparent);
+            background-size: 200% 100%;
+            animation: scan 2s linear infinite;
+        }
+        @keyframes scan { 0% { background-position: 200% } 100% { background-position: -200% } }
+
+        /* Dots */
+        .dot { display: inline-block; border-radius: 50%; animation: pdot 1.4s ease-in-out infinite; }
+        .dot:nth-child(2) { animation-delay: 0.22s }
+        .dot:nth-child(3) { animation-delay: 0.44s }
+        @keyframes pdot {
+            0%, 100% { transform: scale(0.5); opacity: 0.25 }
+            50%       { transform: scale(1);   opacity: 1 }
+        }
 
         /* Card entrance */
-        .card-enter { animation: fadeUp 0.35s ease forwards; opacity:0; }
-        @keyframes fadeUp { to{opacity:1;transform:translateY(0)} from{opacity:0;transform:translateY(16px)} }
+        .card-enter { animation: fadeUp 0.38s ease forwards; opacity: 0; }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(14px) }
+            to   { opacity: 1; transform: translateY(0) }
+        }
 
-        /* Risk badges */
-        .risk-HIGH   { background:#fef2f2;color:#991b1b;border:1px solid #fca5a5; }
-        .risk-MEDIUM { background:#fffbeb;color:#92400e;border:1px solid #fcd34d; }
-        .risk-LOW    { background:#f0fdf4;color:#166534;border:1px solid #86efac; }
-        .risk-UNKNOWN{ background:#f9fafb;color:#374151;border:1px solid #d1d5db; }
+        /* Risk classes */
+        .risk-HIGH   { background: rgba(239,68,68,0.14);  color: #fca5a5; border: 1px solid rgba(239,68,68,0.28); }
+        .risk-MEDIUM { background: rgba(245,158,11,0.14); color: #fde68a; border: 1px solid rgba(245,158,11,0.28); }
+        .risk-LOW    { background: rgba(34,197,94,0.14);  color: #86efac; border: 1px solid rgba(34,197,94,0.28); }
+        .risk-UNKNOWN{ background: rgba(148,163,184,0.1); color: #94a3b8; border: 1px solid rgba(148,163,184,0.2); }
 
-        .pill { display:inline-flex;align-items:center;gap:3px;border-radius:9999px;
-                padding:2px 9px;font-size:.7rem;font-weight:700;letter-spacing:.02em; }
-
-        .bar-bg  { background:#e5e7eb;border-radius:4px;height:5px;overflow:hidden; }
-        .bar-fill{ height:100%;border-radius:4px;transition:width .5s cubic-bezier(.4,0,.2,1); }
-
-        .conflict-banner { background:linear-gradient(90deg,#fef3c7,#fef9ee);border-left:3px solid #f59e0b; }
-
-        /* Input focus glow */
-        .search-input:focus { box-shadow: 0 0 0 3px rgba(59,130,246,0.3); }
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 9999px;
+            padding: 3px 10px;
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
 
         /* Sort buttons */
-        .sort-btn { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); }
-        .sort-btn:hover { background: rgba(255,255,255,0.2); }
-        .sort-btn.active-sort { background: white; color: #1d4ed8; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+        .sort-btn {
+            background: rgba(255,255,255,0.05);
+            color: rgba(180,210,255,0.5);
+            border: 1px solid rgba(255,255,255,0.08);
+            transition: all 0.15s;
+        }
+        .sort-btn:hover { background: rgba(255,255,255,0.09); color: rgba(180,210,255,0.85); border-color: rgba(255,255,255,0.14); }
+        .sort-btn.active-sort { background: rgba(59,130,246,0.18); color: #93c5fd; border-color: rgba(59,130,246,0.38); }
+
+        /* Trust bar */
+        .tbar-bg   { height: 5px; border-radius: 99px; background: rgba(255,255,255,0.08); overflow: hidden; }
+        .tbar-fill { height: 100%; border-radius: 99px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(59,130,246,0.2); border-radius: 99px; }
     </style>
 </head>
 <body>
-
-    <!-- Background orbs -->
     <div class="bg-orb bg-orb-1"></div>
     <div class="bg-orb bg-orb-2"></div>
-    <div class="bg-orb bg-orb-3"></div>
 
     <div class="relative z-10 min-h-screen flex flex-col">
 
-        <!-- ── HERO / HEADER ───────────────────────────────────────────── -->
-        <div id="heroSection" class="flex flex-col items-center justify-center pt-16 pb-10 px-6 text-center transition-all duration-700">
+        <!-- ── HERO ───────────────────────────────────────────────────── -->
+        <div id="heroSection" class="flex flex-col items-center justify-center pt-14 pb-8 px-6 text-center">
 
-            <!-- Logo -->
-            <div class="logo-ring w-20 h-20 mb-6">
-                <div class="relative z-10 w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-xl">
-                    <span class="text-white text-2xl font-black">T</span>
+            <div class="logo-ring w-16 h-16 mb-5">
+                <div class="relative z-10 w-14 h-14 rounded-full flex items-center justify-center"
+                     style="background:linear-gradient(135deg,#3b82f6,#6366f1);box-shadow:0 0 0 4px rgba(59,130,246,0.12),0 8px 28px rgba(59,130,246,0.28)">
+                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                    </svg>
                 </div>
             </div>
 
-            <h1 class="text-5xl font-black text-white tracking-tight drop-shadow-lg">TrustCart</h1>
-            <p class="text-blue-200 text-base font-medium mt-2 tracking-wide">AI-Powered E-Commerce Fraud Detection</p>
+            <h1 class="text-4xl sm:text-5xl font-black text-white tracking-tight">TrustCart</h1>
+            <p class="text-sm font-medium mt-2 tracking-wide" style="color:rgba(147,197,253,0.65)">AI-Powered E-Commerce Fraud Detection</p>
 
-            <!-- Tech pills -->
             <div class="flex flex-wrap justify-center gap-2 mt-5">
-                <span class="pill" style="background:rgba(34,197,94,.15);color:#86efac;border:1px solid rgba(134,239,172,.3)">⚡ XGBoost 94.5% F1</span>
-                <span class="pill" style="background:rgba(99,102,241,.15);color:#c4b5fd;border:1px solid rgba(196,181,253,.3)">🤖 Groq LLM</span>
-                <span class="pill" style="background:rgba(14,165,233,.15);color:#7dd3fc;border:1px solid rgba(125,211,252,.3)">🔁 Duplicate Detection</span>
-                <span class="pill" style="background:rgba(249,115,22,.15);color:#fdba74;border:1px solid rgba(253,186,116,.3)">📊 Real-time Analysis</span>
+                <span class="pill" style="background:rgba(34,197,94,.1);color:#86efac;border:1px solid rgba(134,239,172,.18)">XGBoost 94.5% F1</span>
+                <span class="pill" style="background:rgba(99,102,241,.1);color:#c4b5fd;border:1px solid rgba(196,181,253,.18)">Groq LLM</span>
+                <span class="pill" style="background:rgba(14,165,233,.1);color:#7dd3fc;border:1px solid rgba(125,211,252,.18)">Duplicate Detection</span>
+                <span class="pill" style="background:rgba(249,115,22,.1);color:#fdba74;border:1px solid rgba(253,186,116,.18)">Real-time Analysis</span>
             </div>
         </div>
 
-        <!-- ── SEARCH ───────────────────────────────────────────────────── -->
-        <div class="flex justify-center px-6 mb-8">
-            <div class="glass-panel rounded-2xl p-5 w-full max-w-4xl">
+        <!-- ── SEARCH ─────────────────────────────────────────────────── -->
+        <div class="flex justify-center px-4 sm:px-6 mb-8">
+            <div class="surface rounded-2xl p-4 sm:p-5 w-full max-w-4xl">
                 <div class="flex flex-col sm:flex-row gap-3">
-                    <input
-                        type="text"
-                        id="searchQuery"
-                        placeholder="Search any product — iPhone 13, used cars, headphones..."
-                        class="search-input flex-1 px-5 py-3.5 rounded-xl bg-white/90 text-gray-800 text-sm font-medium placeholder-gray-400 outline-none border border-white/50 transition-all"
-                        onkeypress="if(event.key==='Enter') searchProducts()"
-                    >
-                    <select id="platformSelect" class="px-4 py-3.5 rounded-xl bg-white/90 text-gray-700 text-sm font-semibold outline-none border border-white/50 cursor-pointer">
-                        <option value="all">All Platforms</option>
-                        <option value="google">Google Shopping</option>
-                        <option value="ebay">eBay</option>
+                    <input type="text" id="searchQuery"
+                           placeholder="Search any product — iPhone 13, headphones, sneakers..."
+                           class="field flex-1 px-4 py-3 rounded-xl text-sm font-medium"
+                           onkeypress="if(event.key==='Enter') searchProducts()">
+                    <select id="platformSelect" class="field px-4 py-3 rounded-xl text-sm font-semibold cursor-pointer">
+                        <option value="all"    style="background:#0c1630">All Platforms</option>
+                        <option value="google" style="background:#0c1630">Google Shopping</option>
+                        <option value="ebay"   style="background:#0c1630">eBay</option>
                     </select>
-                    <select id="numResults" class="px-4 py-3.5 rounded-xl bg-white/90 text-gray-700 text-sm font-semibold outline-none border border-white/50 cursor-pointer">
-                        <option value="10">10 results</option>
-                        <option value="20" selected>20 results</option>
-                        <option value="30">30 results</option>
-                        <option value="50">50 results</option>
+                    <select id="numResults" class="field px-4 py-3 rounded-xl text-sm font-semibold cursor-pointer">
+                        <option value="10"  style="background:#0c1630">10 results</option>
+                        <option value="20" selected style="background:#0c1630">20 results</option>
+                        <option value="30"  style="background:#0c1630">30 results</option>
+                        <option value="50"  style="background:#0c1630">50 results</option>
                     </select>
-                    <input type="number" id="maxPrice" placeholder="Max $" class="search-input w-28 px-4 py-3.5 rounded-xl bg-white/90 text-gray-700 text-sm font-semibold outline-none border border-white/50">
-                    <button
-                        onclick="searchProducts()"
-                        id="searchBtn"
-                        class="px-7 py-3.5 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white text-sm font-bold rounded-xl shadow-lg transition-all whitespace-nowrap disabled:opacity-60"
-                    >
+                    <input type="number" id="maxPrice" placeholder="Max $"
+                           class="field w-24 px-4 py-3 rounded-xl text-sm font-semibold">
+                    <button onclick="searchProducts()" id="searchBtn"
+                            class="px-6 py-3 text-white text-sm font-bold rounded-xl shadow-lg transition-all whitespace-nowrap disabled:opacity-50"
+                            style="background:linear-gradient(135deg,#3b82f6,#6366f1)">
                         Analyze →
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- ── LOADING ─────────────────────────────────────────────────── -->
-        <div id="loadingState" class="hidden flex justify-center px-6 mb-8">
-            <div class="glass-panel rounded-2xl p-8 w-full max-w-2xl">
-
-                <!-- Scanning bar -->
+        <!-- ── LOADING ────────────────────────────────────────────────── -->
+        <div id="loadingState" class="hidden flex justify-center px-4 sm:px-6 mb-8">
+            <div class="surface rounded-2xl p-7 w-full max-w-xl">
                 <div class="scan-bar rounded-full mb-6"></div>
 
-                <!-- Animated stage list -->
                 <div class="space-y-4" id="stageList">
-                    <div class="stage flex items-center gap-4" id="stage-0">
-                        <div class="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-base shrink-0" id="stage-icon-0">🔍</div>
-                        <div>
+                    <div class="stage flex items-center gap-3.5" id="stage-0">
+                        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-base"
+                             style="background:rgba(59,130,246,0.12)">🔍</div>
+                        <div class="flex-1 min-w-0">
                             <p class="text-white text-sm font-semibold">Scraping listings</p>
-                            <p class="text-blue-200 text-xs">Fetching from Google Shopping + eBay via SerpAPI</p>
+                            <p class="text-xs truncate" style="color:rgba(147,197,253,0.45)">Google Shopping + eBay via SerpAPI</p>
                         </div>
-                        <div class="ml-auto" id="stage-status-0"></div>
+                        <div class="ml-auto shrink-0" id="stage-status-0"></div>
                     </div>
-                    <div class="stage flex items-center gap-4" id="stage-1">
-                        <div class="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-base shrink-0">📊</div>
-                        <div>
+                    <div class="stage flex items-center gap-3.5" id="stage-1">
+                        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-base"
+                             style="background:rgba(99,102,241,0.12)">📊</div>
+                        <div class="flex-1 min-w-0">
                             <p class="text-white text-sm font-semibold">Statistical scoring</p>
-                            <p class="text-blue-200 text-xs">Price percentile analysis · outlier removal · seller trust</p>
+                            <p class="text-xs truncate" style="color:rgba(147,197,253,0.45)">Price percentile · outlier removal · seller trust</p>
                         </div>
-                        <div class="ml-auto" id="stage-status-1"></div>
+                        <div class="ml-auto shrink-0" id="stage-status-1"></div>
                     </div>
-                    <div class="stage flex items-center gap-4" id="stage-2">
-                        <div class="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center text-base shrink-0">⚡</div>
-                        <div>
+                    <div class="stage flex items-center gap-3.5" id="stage-2">
+                        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-base"
+                             style="background:rgba(139,92,246,0.12)">⚡</div>
+                        <div class="flex-1 min-w-0">
                             <p class="text-white text-sm font-semibold">XGBoost inference</p>
-                            <p class="text-blue-200 text-xs">14-feature gradient boosted classifier · 94.5% F1</p>
+                            <p class="text-xs truncate" style="color:rgba(147,197,253,0.45)">14-feature classifier · 94.5% F1</p>
                         </div>
-                        <div class="ml-auto" id="stage-status-2"></div>
+                        <div class="ml-auto shrink-0" id="stage-status-2"></div>
                     </div>
-                    <div class="stage flex items-center gap-4" id="stage-3">
-                        <div class="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center text-base shrink-0">🤖</div>
-                        <div>
+                    <div class="stage flex items-center gap-3.5" id="stage-3">
+                        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-base"
+                             style="background:rgba(6,182,212,0.12)">🤖</div>
+                        <div class="flex-1 min-w-0">
                             <p class="text-white text-sm font-semibold">Groq LLM reasoning</p>
-                            <p class="text-blue-200 text-xs">Natural language fraud explanation · top 5 risky items</p>
+                            <p class="text-xs truncate" style="color:rgba(147,197,253,0.45)">Natural language fraud explanation · top 5 risky items</p>
                         </div>
-                        <div class="ml-auto" id="stage-status-3"></div>
+                        <div class="ml-auto shrink-0" id="stage-status-3"></div>
                     </div>
-                    <div class="stage flex items-center gap-4" id="stage-4">
-                        <div class="w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center text-base shrink-0">🔁</div>
-                        <div>
+                    <div class="stage flex items-center gap-3.5" id="stage-4">
+                        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-base"
+                             style="background:rgba(167,139,250,0.12)">🔁</div>
+                        <div class="flex-1 min-w-0">
                             <p class="text-white text-sm font-semibold">Duplicate detection</p>
-                            <p class="text-blue-200 text-xs">TF-IDF cosine similarity · cross-platform pair matching</p>
+                            <p class="text-xs truncate" style="color:rgba(147,197,253,0.45)">TF-IDF cosine similarity · cross-platform pairs</p>
                         </div>
-                        <div class="ml-auto" id="stage-status-4"></div>
+                        <div class="ml-auto shrink-0" id="stage-status-4"></div>
                     </div>
                 </div>
 
-                <!-- Pulse dots -->
                 <div class="flex justify-center gap-2 mt-6">
-                    <span class="dot w-2 h-2 bg-blue-400"></span>
-                    <span class="dot w-2 h-2 bg-indigo-400"></span>
-                    <span class="dot w-2 h-2 bg-cyan-400"></span>
+                    <span class="dot w-1.5 h-1.5 bg-blue-400"></span>
+                    <span class="dot w-1.5 h-1.5 bg-indigo-400"></span>
+                    <span class="dot w-1.5 h-1.5 bg-sky-400"></span>
                 </div>
             </div>
         </div>
 
-        <!-- ── EMPTY STATE ─────────────────────────────────────────────── -->
-        <div id="emptyState" class="flex flex-col items-center py-8 text-center px-6">
-            <p class="text-blue-200 text-sm font-medium">Enter a product above to start real-time fraud analysis</p>
+        <!-- ── EMPTY STATE ────────────────────────────────────────────── -->
+        <div id="emptyState" class="flex flex-col items-center py-10 text-center px-6">
+            <p class="text-sm font-medium" style="color:rgba(147,197,253,0.35)">Enter a product above to start real-time fraud analysis</p>
         </div>
 
-        <!-- ── SORT / FILTER BAR ─────────────────────────────────────────── -->
-        <div id="sortBar" class="hidden px-6 mb-4">
+        <!-- ── SORT BAR ───────────────────────────────────────────────── -->
+        <div id="sortBar" class="hidden px-4 sm:px-6 mb-4">
             <div class="flex flex-wrap items-center gap-2 max-w-7xl mx-auto">
-                <span class="text-white/60 text-xs font-semibold uppercase tracking-wide mr-1">Sort by</span>
-                <button id="btn-risk-asc"   onclick="setSort('risk-asc')"   class="sort-btn active-sort px-4 py-1.5 rounded-full text-xs font-bold transition-all">🛡 Safest first</button>
-                <button id="btn-risk-desc"  onclick="setSort('risk-desc')"  class="sort-btn px-4 py-1.5 rounded-full text-xs font-bold transition-all">⚠️ Riskiest first</button>
-                <button id="btn-price-asc"  onclick="setSort('price-asc')"  class="sort-btn px-4 py-1.5 rounded-full text-xs font-bold transition-all">💲 Price: Low → High</button>
-                <button id="btn-price-desc" onclick="setSort('price-desc')" class="sort-btn px-4 py-1.5 rounded-full text-xs font-bold transition-all">💰 Price: High → Low</button>
+                <span class="text-xs font-semibold uppercase tracking-wider mr-1" style="color:rgba(255,255,255,0.25)">Sort</span>
+                <button id="btn-risk-asc"   onclick="setSort('risk-asc')"   class="sort-btn active-sort px-4 py-1.5 rounded-full text-xs font-semibold">Safest first</button>
+                <button id="btn-risk-desc"  onclick="setSort('risk-desc')"  class="sort-btn px-4 py-1.5 rounded-full text-xs font-semibold">Riskiest first</button>
+                <button id="btn-price-asc"  onclick="setSort('price-asc')"  class="sort-btn px-4 py-1.5 rounded-full text-xs font-semibold">Price: Low → High</button>
+                <button id="btn-price-desc" onclick="setSort('price-desc')" class="sort-btn px-4 py-1.5 rounded-full text-xs font-semibold">Price: High → Low</button>
             </div>
         </div>
 
-        <!-- ── SUMMARY BAR ─────────────────────────────────────────────── -->
-        <div id="summaryBar" class="hidden px-6 mb-6 flex justify-center">
-            <div id="summaryContent" class="glass-panel rounded-2xl p-6 w-full max-w-7xl shadow-xl"></div>
+        <!-- ── SUMMARY BAR ────────────────────────────────────────────── -->
+        <div id="summaryBar" class="hidden px-4 sm:px-6 mb-6 flex justify-center">
+            <div id="summaryContent" class="surface rounded-2xl p-5 sm:p-6 w-full max-w-7xl"></div>
         </div>
 
-        <!-- ── RESULTS ─────────────────────────────────────────────────── -->
-        <div id="resultsSection" class="hidden px-6 pb-16">
-            <div id="resultsGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 max-w-7xl mx-auto"></div>
+        <!-- ── RESULTS ────────────────────────────────────────────────── -->
+        <div id="resultsSection" class="hidden px-4 sm:px-6 pb-16">
+            <div id="resultsGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 max-w-7xl mx-auto"></div>
         </div>
 
-    </div><!-- /z-10 -->
+    </div>
 
     <script src="/static/app.js"></script>
 </body>
