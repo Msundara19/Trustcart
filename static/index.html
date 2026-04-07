@@ -12,9 +12,9 @@
         *, *::before, *::after { font-family: 'Montserrat', system-ui, -apple-system, sans-serif; }
 
         body {
-            background: linear-gradient(160deg, #dce6f5 0%, #eef2fb 35%, #e9eef9 70%, #dfe9f7 100%);
+            background: linear-gradient(160deg, #d2e8d8 0%, #e8f4ec 35%, #e2ede6 70%, #d6e8db 100%);
             min-height: 100vh;
-            color: #0f1f5c;
+            color: #0f2318;
         }
 
         /* Nav */
@@ -30,7 +30,7 @@
             background: #ffffff;
             border: 1px solid rgba(0,0,0,0.07);
             border-radius: 18px;
-            box-shadow: 0 4px 24px rgba(15,31,92,0.07);
+            box-shadow: 0 4px 24px rgba(15,35,24,0.07);
         }
 
         /* White panel card */
@@ -38,7 +38,7 @@
             background: #ffffff;
             border: 1px solid rgba(0,0,0,0.08);
             border-radius: 18px;
-            box-shadow: 0 4px 24px rgba(15,31,92,0.06);
+            box-shadow: 0 4px 24px rgba(15,35,24,0.06);
         }
 
         /* Product card */
@@ -46,41 +46,41 @@
             background: #ffffff;
             border: 1px solid rgba(0,0,0,0.08);
             border-radius: 16px;
-            box-shadow: 0 2px 12px rgba(15,31,92,0.05);
+            box-shadow: 0 2px 12px rgba(15,35,24,0.05);
             transition: box-shadow 0.2s ease, transform 0.2s ease;
         }
         .product-card:hover {
-            box-shadow: 0 10px 36px rgba(15,31,92,0.11);
+            box-shadow: 0 10px 36px rgba(15,35,24,0.11);
             transform: translateY(-2px);
         }
 
         /* Input fields */
         .field {
-            background: #f3f7ff;
-            border: 1.5px solid #ccd6ee;
-            color: #0f1f5c;
+            background: #eef7f1;
+            border: 1.5px solid #b8d9c3;
+            color: #0f2318;
             outline: none;
             transition: border-color 0.2s, box-shadow 0.2s;
         }
         .field:focus {
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+            border-color: #16a34a;
+            box-shadow: 0 0 0 3px rgba(22,163,74,0.1);
         }
-        .field::placeholder { color: #9bacc8; }
+        .field::placeholder { color: #8fb5a0; }
         select.field {
             appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath fill='%236b7fa8' d='M0 0l5 7 5-7z'/%3E%3C/svg%3E");
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath fill='%236e9e82' d='M0 0l5 7 5-7z'/%3E%3C/svg%3E");
             background-repeat: no-repeat;
             background-position: right 12px center;
-            background-color: #f3f7ff;
+            background-color: #eef7f1;
             padding-right: 30px !important;
         }
 
         /* Category / hero label */
         .category-label {
             display: inline-block;
-            border: 1.5px solid #b8ccee;
-            color: #4d6fbe;
+            border: 1.5px solid #9ed4b3;
+            color: #2d7a50;
             font-size: 0.68rem;
             font-weight: 700;
             letter-spacing: 0.12em;
@@ -93,14 +93,14 @@
             font-size: 0.64rem;
             font-weight: 700;
             letter-spacing: 0.13em;
-            color: #8fa5d0;
+            color: #6e9e82;
             text-transform: uppercase;
         }
 
         /* GitHub button */
         .github-btn {
-            border: 1.5px solid #c0cfe8;
-            color: #0f1f5c;
+            border: 1.5px solid #aed4be;
+            color: #0f2318;
             background: rgba(255,255,255,0.85);
             font-size: 0.78rem;
             font-weight: 700;
@@ -110,7 +110,7 @@
             text-decoration: none;
             letter-spacing: 0.01em;
         }
-        .github-btn:hover { border-color: #2563eb; color: #2563eb; background: #ffffff; }
+        .github-btn:hover { border-color: #16a34a; color: #16a34a; background: #ffffff; }
 
         /* Loading stages */
         .stage { opacity: 0; transform: translateX(-8px); transition: all 0.4s ease; }
@@ -121,7 +121,7 @@
         .scan-bar {
             height: 2px;
             border-radius: 99px;
-            background: linear-gradient(90deg, transparent, #2563eb, #6366f1, transparent);
+            background: linear-gradient(90deg, transparent, #16a34a, #059669, transparent);
             background-size: 200% 100%;
             animation: scan 2s linear infinite;
         }
@@ -146,15 +146,15 @@
         /* Sort buttons */
         .sort-btn {
             background: rgba(255,255,255,0.85);
-            color: #6b7fa8;
-            border: 1.5px solid #cdd7ee;
+            color: #4e7862;
+            border: 1.5px solid #b0d4bc;
             transition: all 0.15s;
         }
-        .sort-btn:hover { background: #ffffff; color: #0f1f5c; border-color: #2563eb; }
-        .sort-btn.active-sort { background: #2563eb; color: #ffffff; border-color: #2563eb; }
+        .sort-btn:hover { background: #ffffff; color: #0f2318; border-color: #16a34a; }
+        .sort-btn.active-sort { background: #16a34a; color: #ffffff; border-color: #16a34a; }
 
         /* Trust bar */
-        .tbar-bg   { height: 5px; border-radius: 99px; background: #e6edf8; overflow: hidden; }
+        .tbar-bg   { height: 5px; border-radius: 99px; background: #d8eedf; overflow: hidden; }
         .tbar-fill { height: 100%; border-radius: 99px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
 
         /* Pill */
@@ -171,7 +171,7 @@
         /* Scrollbar */
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(37,99,235,0.2); border-radius: 99px; }
+        ::-webkit-scrollbar-thumb { background: rgba(22,163,74,0.25); border-radius: 99px; }
     </style>
 </head>
 <body>
@@ -180,14 +180,14 @@
     <nav class="nav-bar sticky top-0 z-50 px-6 py-3.5 flex items-center justify-between">
         <div class="flex items-center gap-3">
             <div class="w-9 h-9 rounded-xl flex items-center justify-center"
-                 style="background:linear-gradient(135deg,#2563eb,#4f46e5)">
+                 style="background:linear-gradient(135deg,#16a34a,#059669)">
                 <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round"
                           d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                 </svg>
             </div>
-            <span class="text-base font-black" style="color:#0f1f5c">TrustCart</span>
-            <span style="border:1.5px solid #b8ccee;color:#4d6fbe;font-size:0.6rem;font-weight:700;letter-spacing:0.11em;padding:4px 12px;border-radius:999px">
+            <span class="text-base font-black" style="color:#0f2318">TrustCart</span>
+            <span style="border:1.5px solid #9ed4b3;color:#2d7a50;font-size:0.6rem;font-weight:700;letter-spacing:0.11em;padding:4px 12px;border-radius:999px">
                 AI FRAUD DETECTION
             </span>
         </div>
@@ -204,11 +204,11 @@
             <span class="category-label mb-7">E-COMMERCE FRAUD DETECTION</span>
 
             <h1 class="font-black leading-tight tracking-tight"
-                style="font-size:clamp(2.4rem,5vw,3.8rem);color:#0f1f5c">Smarter shopping.</h1>
+                style="font-size:clamp(2.4rem,5vw,3.8rem);color:#0f2318">Smarter shopping.</h1>
             <h1 class="font-black leading-tight tracking-tight mb-5"
-                style="font-size:clamp(2.4rem,5vw,3.8rem);color:#2563eb">Fewer scams.</h1>
+                style="font-size:clamp(2.4rem,5vw,3.8rem);color:#16a34a">Fewer scams.</h1>
 
-            <p class="text-sm sm:text-base max-w-lg leading-relaxed" style="color:#6b7fa8">
+            <p class="text-sm sm:text-base max-w-lg leading-relaxed" style="color:#4e7862">
                 TrustCart scrapes Google Shopping and eBay, runs every listing through
                 an XGBoost classifier and Groq LLM, and surfaces fraud signals in real time —
                 so you always know what you're buying.
@@ -218,19 +218,19 @@
             <div class="stat-card mt-10 w-full max-w-2xl overflow-hidden">
                 <div class="grid grid-cols-2 sm:grid-cols-4" style="divide-color:rgba(0,0,0,0.06)">
                     <div class="px-6 py-5 text-center" style="border-right:1px solid rgba(0,0,0,0.06)">
-                        <p class="text-2xl font-black" style="color:#0f1f5c">94.5%</p>
+                        <p class="text-2xl font-black" style="color:#0f2318">94.5%</p>
                         <p class="section-label mt-1.5">XGBoost F1</p>
                     </div>
                     <div class="px-6 py-5 text-center" style="border-right:1px solid rgba(0,0,0,0.06)">
-                        <p class="text-2xl font-black" style="color:#0f1f5c">14</p>
+                        <p class="text-2xl font-black" style="color:#0f2318">14</p>
                         <p class="section-label mt-1.5">Feature Inputs</p>
                     </div>
                     <div class="px-6 py-5 text-center" style="border-right:1px solid rgba(0,0,0,0.06)">
-                        <p class="text-2xl font-black" style="color:#0f1f5c">Groq</p>
+                        <p class="text-2xl font-black" style="color:#0f2318">Groq</p>
                         <p class="section-label mt-1.5">LLM Reasoning</p>
                     </div>
                     <div class="px-6 py-5 text-center">
-                        <p class="text-2xl font-black" style="color:#0f1f5c">2</p>
+                        <p class="text-2xl font-black" style="color:#0f2318">2</p>
                         <p class="section-label mt-1.5">Platforms Scanned</p>
                     </div>
                 </div>
@@ -261,7 +261,7 @@
                            class="field w-24 px-4 py-3 rounded-xl text-sm font-semibold">
                     <button onclick="searchProducts()" id="searchBtn"
                             class="px-6 py-3 text-white text-sm font-bold rounded-xl whitespace-nowrap disabled:opacity-50 transition-opacity hover:opacity-90"
-                            style="background:#2563eb;box-shadow:0 4px 14px rgba(37,99,235,0.3)">
+                            style="background:#16a34a;box-shadow:0 4px 14px rgba(22,163,74,0.3)">
                         Analyze →
                     </button>
                 </div>
@@ -276,10 +276,10 @@
                 <div class="space-y-4" id="stageList">
                     <div class="stage flex items-center gap-3.5" id="stage-0">
                         <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-base"
-                             style="background:rgba(37,99,235,0.1)">🔍</div>
+                             style="background:rgba(22,163,74,0.1)">🔍</div>
                         <div class="flex-1 min-w-0">
-                            <p class="text-sm font-semibold" style="color:#0f1f5c">Scraping listings</p>
-                            <p class="text-xs truncate" style="color:#9bacc8">Google Shopping + eBay via SerpAPI</p>
+                            <p class="text-sm font-semibold" style="color:#0f2318">Scraping listings</p>
+                            <p class="text-xs truncate" style="color:#8fb5a0">Google Shopping + eBay via SerpAPI</p>
                         </div>
                         <div class="ml-auto shrink-0" id="stage-status-0"></div>
                     </div>
@@ -287,8 +287,8 @@
                         <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-base"
                              style="background:rgba(99,102,241,0.1)">📊</div>
                         <div class="flex-1 min-w-0">
-                            <p class="text-sm font-semibold" style="color:#0f1f5c">Statistical scoring</p>
-                            <p class="text-xs truncate" style="color:#9bacc8">Price percentile · outlier removal · seller trust</p>
+                            <p class="text-sm font-semibold" style="color:#0f2318">Statistical scoring</p>
+                            <p class="text-xs truncate" style="color:#8fb5a0">Price percentile · outlier removal · seller trust</p>
                         </div>
                         <div class="ml-auto shrink-0" id="stage-status-1"></div>
                     </div>
@@ -296,8 +296,8 @@
                         <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-base"
                              style="background:rgba(139,92,246,0.1)">⚡</div>
                         <div class="flex-1 min-w-0">
-                            <p class="text-sm font-semibold" style="color:#0f1f5c">XGBoost inference</p>
-                            <p class="text-xs truncate" style="color:#9bacc8">14-feature classifier · 94.5% F1</p>
+                            <p class="text-sm font-semibold" style="color:#0f2318">XGBoost inference</p>
+                            <p class="text-xs truncate" style="color:#8fb5a0">14-feature classifier · 94.5% F1</p>
                         </div>
                         <div class="ml-auto shrink-0" id="stage-status-2"></div>
                     </div>
@@ -305,8 +305,8 @@
                         <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-base"
                              style="background:rgba(6,182,212,0.1)">🤖</div>
                         <div class="flex-1 min-w-0">
-                            <p class="text-sm font-semibold" style="color:#0f1f5c">Groq LLM reasoning</p>
-                            <p class="text-xs truncate" style="color:#9bacc8">Natural language fraud explanation · top 5 risky items</p>
+                            <p class="text-sm font-semibold" style="color:#0f2318">Groq LLM reasoning</p>
+                            <p class="text-xs truncate" style="color:#8fb5a0">Natural language fraud explanation · top 5 risky items</p>
                         </div>
                         <div class="ml-auto shrink-0" id="stage-status-3"></div>
                     </div>
@@ -314,24 +314,24 @@
                         <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-base"
                              style="background:rgba(167,139,250,0.1)">🔁</div>
                         <div class="flex-1 min-w-0">
-                            <p class="text-sm font-semibold" style="color:#0f1f5c">Duplicate detection</p>
-                            <p class="text-xs truncate" style="color:#9bacc8">TF-IDF cosine similarity · cross-platform pairs</p>
+                            <p class="text-sm font-semibold" style="color:#0f2318">Duplicate detection</p>
+                            <p class="text-xs truncate" style="color:#8fb5a0">TF-IDF cosine similarity · cross-platform pairs</p>
                         </div>
                         <div class="ml-auto shrink-0" id="stage-status-4"></div>
                     </div>
                 </div>
 
                 <div class="flex justify-center gap-2 mt-6">
-                    <span class="dot w-1.5 h-1.5 rounded-full" style="background:#2563eb"></span>
-                    <span class="dot w-1.5 h-1.5 rounded-full" style="background:#4f46e5"></span>
-                    <span class="dot w-1.5 h-1.5 rounded-full" style="background:#0ea5e9"></span>
+                    <span class="dot w-1.5 h-1.5 rounded-full" style="background:#16a34a"></span>
+                    <span class="dot w-1.5 h-1.5 rounded-full" style="background:#059669"></span>
+                    <span class="dot w-1.5 h-1.5 rounded-full" style="background:#34d399"></span>
                 </div>
             </div>
         </div>
 
         <!-- ── EMPTY STATE ────────────────────────────────────────────── -->
         <div id="emptyState" class="flex flex-col items-center py-10 text-center px-6">
-            <p class="text-sm font-semibold" style="color:#b0c0da">Enter a product above to start real-time fraud analysis</p>
+            <p class="text-sm font-semibold" style="color:#9abfac">Enter a product above to start real-time fraud analysis</p>
         </div>
 
         <!-- ── SORT BAR ───────────────────────────────────────────────── -->
