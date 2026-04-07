@@ -130,9 +130,9 @@ function renderSummaryBar(data) {
 
             <!-- Safety overview -->
             <div class="flex-1 min-w-[200px] rounded-xl p-4"
-                 style="background:#f5f8ff;border:1px solid rgba(0,0,0,0.06)">
+                 style="background:#eef7f1;border:1px solid rgba(0,0,0,0.06)">
                 <p class="text-xs font-bold uppercase tracking-widest mb-3"
-                   style="color:#8fa5d0;letter-spacing:0.12em">Safety Overview</p>
+                   style="color:#6e9e82;letter-spacing:0.12em">Safety Overview</p>
                 <div class="space-y-2.5">
                     ${summaryRiskBar('Avoid',  high, total, '#f87171')}
                     ${summaryRiskBar('Verify', med,  total, '#fbbf24')}
@@ -142,34 +142,34 @@ function renderSummaryBar(data) {
 
             ${ps.median != null ? `
             <div class="rounded-xl p-4 flex flex-col justify-between"
-                 style="background:#f5f8ff;border:1px solid rgba(0,0,0,0.06);min-width:130px">
+                 style="background:#eef7f1;border:1px solid rgba(0,0,0,0.06);min-width:130px">
                 <p class="text-xs font-bold uppercase tracking-widest mb-2"
-                   style="color:#8fa5d0;letter-spacing:0.12em">Typical Price</p>
+                   style="color:#6e9e82;letter-spacing:0.12em">Typical Price</p>
                 <div>
-                    <p class="text-2xl font-black" style="color:#0f1f5c">$${ps.median.toFixed(0)}</p>
-                    <p class="text-xs mt-1" style="color:#8fa5d0">$${ps.min.toFixed(0)} – $${ps.max.toFixed(0)}</p>
+                    <p class="text-2xl font-black" style="color:#0f2318">$${ps.median.toFixed(0)}</p>
+                    <p class="text-xs mt-1" style="color:#6e9e82">$${ps.min.toFixed(0)} – $${ps.max.toFixed(0)}</p>
                 </div>
             </div>
             ` : ''}
 
             <div class="rounded-xl p-4 flex flex-col justify-between"
-                 style="background:#f5f8ff;border:1px solid rgba(0,0,0,0.06);min-width:120px">
+                 style="background:#eef7f1;border:1px solid rgba(0,0,0,0.06);min-width:120px">
                 <p class="text-xs font-bold uppercase tracking-widest mb-2"
-                   style="color:#8fa5d0;letter-spacing:0.12em">Listings Found</p>
+                   style="color:#6e9e82;letter-spacing:0.12em">Listings Found</p>
                 <div>
-                    <p class="text-2xl font-black" style="color:#0f1f5c">${data.valid_products || 0}</p>
-                    <p class="text-xs mt-1" style="color:#8fa5d0">${(data.platforms_searched||[]).map(s => s === 'google_shopping' ? 'Google' : 'eBay').join(' + ')}${data.filtered_out ? ` · ${data.filtered_out} filtered` : ''}</p>
+                    <p class="text-2xl font-black" style="color:#0f2318">${data.valid_products || 0}</p>
+                    <p class="text-xs mt-1" style="color:#6e9e82">${(data.platforms_searched||[]).map(s => s === 'google_shopping' ? 'Google' : 'eBay').join(' + ')}${data.filtered_out ? ` · ${data.filtered_out} filtered` : ''}</p>
                 </div>
             </div>
 
             ${ds.duplicate_groups > 0 ? `
             <div class="rounded-xl p-4 flex flex-col justify-between"
-                 style="background:rgba(79,70,229,0.07);border:1px solid rgba(79,70,229,0.16);min-width:120px">
+                 style="background:rgba(5,150,105,0.07);border:1px solid rgba(5,150,105,0.18);min-width:120px">
                 <p class="text-xs font-bold uppercase tracking-widest mb-2"
-                   style="color:#6366f1;letter-spacing:0.12em">Duplicates</p>
+                   style="color:#059669;letter-spacing:0.12em">Duplicates</p>
                 <div>
-                    <p class="text-2xl font-black" style="color:#4338ca">${ds.total_duplicates}</p>
-                    <p class="text-xs mt-1" style="color:#6366f1">${ds.duplicate_groups} group${ds.duplicate_groups!==1?'s':''} · ${ds.cross_platform_pairs} cross-platform</p>
+                    <p class="text-2xl font-black" style="color:#065f46">${ds.total_duplicates}</p>
+                    <p class="text-xs mt-1" style="color:#059669">${ds.duplicate_groups} group${ds.duplicate_groups!==1?'s':''} · ${ds.cross_platform_pairs} cross-platform</p>
                 </div>
             </div>
             ` : ''}
@@ -204,7 +204,7 @@ function renderResults(products) {
     const grid = document.getElementById('resultsGrid');
     grid.innerHTML = '';
     if (!products.length) {
-        grid.innerHTML = `<div class="col-span-full text-center py-16" style="color:#b0c0da">No products found.</div>`;
+        grid.innerHTML = `<div class="col-span-full text-center py-16" style="color:#9abfac">No products found.</div>`;
     } else {
         products.forEach((p, i) => {
             const card = createCard(p);
@@ -264,7 +264,7 @@ function createCard(p) {
         </div>
 
         ${p.thumbnail ? `
-        <div style="background:#f5f8ff">
+        <div style="background:#eef7f1">
             <img src="${escHtml(p.thumbnail)}" alt="${escHtml(p.title)}"
                  class="w-full h-36 object-contain p-2">
         </div>
@@ -275,20 +275,20 @@ function createCard(p) {
             <!-- Title + price + condition -->
             <div>
                 <h3 class="font-semibold text-sm leading-snug line-clamp-2 mb-2"
-                    style="color:#0f1f5c">${escHtml(p.title)}</h3>
+                    style="color:#0f2318">${escHtml(p.title)}</h3>
                 <div class="flex items-center gap-2.5 mb-1.5">
                     <span class="text-xl font-bold text-white">$${p.price != null ? Number(p.price).toLocaleString() : '—'}</span>
                     ${condLabel ? `<span class="text-xs font-medium px-2 py-0.5 rounded-md"
-                        style="background:#eef2fa;color:#8fa5d0">${condLabel}</span>` : ''}
+                        style="background:#eef2fa;color:#6e9e82">${condLabel}</span>` : ''}
                 </div>
-                <div class="text-xs" style="color:#8fa5d0">${ratingDisplay(p)}</div>
+                <div class="text-xs" style="color:#6e9e82">${ratingDisplay(p)}</div>
             </div>
 
             <!-- Trust meter -->
             <div class="rounded-lg p-3"
-                 style="background:#f5f8ff;border:1px solid rgba(0,0,0,0.06)">
+                 style="background:#eef7f1;border:1px solid rgba(0,0,0,0.06)">
                 <div class="flex items-center justify-between mb-2">
-                    <span class="text-xs font-semibold" style="color:#8fa5d0">Safety Score</span>
+                    <span class="text-xs font-semibold" style="color:#6e9e82">Safety Score</span>
                     <span class="text-base font-bold" style="color:${trustColor}">${trustPct}%</span>
                 </div>
                 <div class="tbar-bg">
@@ -306,12 +306,12 @@ function createCard(p) {
             ` : ''}
 
             <!-- Price context -->
-            ${priceNote ? `<p class="text-xs leading-relaxed" style="color:#8fa5d0">${priceNote}</p>` : ''}
+            ${priceNote ? `<p class="text-xs leading-relaxed" style="color:#6e9e82">${priceNote}</p>` : ''}
 
             <!-- AI reasoning -->
             ${fa.reasoning ? `
             <p class="text-xs leading-relaxed pt-2"
-               style="color:#6b7fa8;border-top:1px solid rgba(0,0,0,0.06)">${escHtml(fa.reasoning)}</p>
+               style="color:#4e7862;border-top:1px solid rgba(0,0,0,0.06)">${escHtml(fa.reasoning)}</p>
             ` : ''}
 
             <!-- Red flags -->
@@ -330,12 +330,12 @@ function createCard(p) {
             <!-- Cross-platform / duplicate notice -->
             ${p.is_cross_platform ? `
             <div class="rounded-lg px-3 py-2 text-xs font-medium"
-                 style="background:rgba(37,99,235,0.07);border:1px solid rgba(37,99,235,0.18);color:#1d4ed8">
+                 style="background:rgba(22,163,74,0.07);border:1px solid rgba(22,163,74,0.2);color:#166534"
                 Appears on multiple platforms — compare prices before buying.
             </div>
             ` : p.duplicate_group != null ? `
             <div class="rounded-lg px-3 py-2 text-xs font-medium"
-                 style="background:rgba(79,70,229,0.07);border:1px solid rgba(79,70,229,0.18);color:#4338ca">
+                 style="background:rgba(5,150,105,0.07);border:1px solid rgba(5,150,105,0.2);color:#065f46"
                 Multiple sellers listing this item — you may find a better deal.
             </div>
             ` : ''}
@@ -347,10 +347,10 @@ function createCard(p) {
                 ${link ? `
                     <a href="${link}" target="_blank" rel="noopener"
                        class="shrink-0 px-4 py-1.5 text-xs font-bold rounded-lg text-white transition-opacity hover:opacity-85"
-                       style="background:#2563eb">
+                       style="background:#16a34a">
                         View listing →
                     </a>
-                ` : `<span class="text-xs" style="color:#b0c0da">No link</span>`}
+                ` : `<span class="text-xs" style="color:#9abfac">No link</span>`}
             </div>
 
         </div>
