@@ -6,122 +6,122 @@
     <title>TrustCart — AI Fraud Detection</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        *, *::before, *::after { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        *, *::before, *::after { font-family: 'Montserrat', system-ui, -apple-system, sans-serif; }
 
         body {
-            background: #070d1a;
+            background: linear-gradient(160deg, #dce6f5 0%, #eef2fb 35%, #e9eef9 70%, #dfe9f7 100%);
             min-height: 100vh;
-            color: #e2eeff;
+            color: #0f1f5c;
         }
 
-        /* Radial mesh background */
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background:
-                radial-gradient(ellipse 90% 55% at 50% -5%, rgba(59,130,246,0.14) 0%, transparent 65%),
-                radial-gradient(ellipse 55% 45% at 88% 88%, rgba(99,102,241,0.09) 0%, transparent 55%);
-            pointer-events: none;
-            z-index: 0;
+        /* Nav */
+        .nav-bar {
+            background: rgba(255,255,255,0.72);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(0,0,0,0.06);
         }
 
-        /* Subtle background orbs */
-        .bg-orb {
-            position: fixed;
-            border-radius: 50%;
-            filter: blur(110px);
-            opacity: 0.07;
-            pointer-events: none;
-            animation: drift 18s ease-in-out infinite alternate;
-        }
-        .bg-orb-1 { width: 700px; height: 700px; background: #3b82f6; top: -250px; left: -200px; }
-        .bg-orb-2 { width: 500px; height: 500px; background: #6366f1; bottom: -150px; right: -150px; animation-delay: -9s; }
-        @keyframes drift {
-            from { transform: translate(0, 0); }
-            to   { transform: translate(25px, 15px); }
+        /* Stat card */
+        .stat-card {
+            background: #ffffff;
+            border: 1px solid rgba(0,0,0,0.07);
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(15,31,92,0.07);
         }
 
-        /* Surface panel */
-        .surface {
-            background: rgba(12, 22, 45, 0.72);
-            backdrop-filter: blur(22px);
-            -webkit-backdrop-filter: blur(22px);
-            border: 1px solid rgba(255,255,255,0.08);
+        /* White panel card */
+        .panel-card {
+            background: #ffffff;
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(15,31,92,0.06);
         }
 
-        /* Card */
+        /* Product card */
         .product-card {
-            background: rgba(13, 24, 48, 0.8);
-            border: 1px solid rgba(255,255,255,0.08);
-            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+            background: #ffffff;
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(15,31,92,0.05);
+            transition: box-shadow 0.2s ease, transform 0.2s ease;
         }
         .product-card:hover {
-            border-color: rgba(255,255,255,0.14);
-            box-shadow: 0 16px 48px rgba(0,0,0,0.5);
-            transform: translateY(-1px);
+            box-shadow: 0 10px 36px rgba(15,31,92,0.11);
+            transform: translateY(-2px);
         }
-
-        /* Logo ring */
-        .logo-ring {
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .logo-ring::before {
-            content: '';
-            position: absolute;
-            inset: -3px;
-            border-radius: 50%;
-            background: conic-gradient(from 0deg, #3b82f6, #6366f1, #0ea5e9, #3b82f6);
-            animation: spin-ring 5s linear infinite;
-            opacity: 0.65;
-        }
-        .logo-ring::after {
-            content: '';
-            position: absolute;
-            inset: -1px;
-            border-radius: 50%;
-            background: #070d1a;
-        }
-        @keyframes spin-ring { to { transform: rotate(360deg); } }
 
         /* Input fields */
         .field {
-            background: rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.09);
-            color: #e2eeff;
+            background: #f3f7ff;
+            border: 1.5px solid #ccd6ee;
+            color: #0f1f5c;
             outline: none;
             transition: border-color 0.2s, box-shadow 0.2s;
         }
         .field:focus {
-            border-color: rgba(59,130,246,0.5);
-            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
         }
-        .field::placeholder { color: rgba(180,210,255,0.28); }
-
-        /* Select arrow */
+        .field::placeholder { color: #9bacc8; }
         select.field {
             appearance: none;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath fill='%236b7fa8' d='M0 0l5 7 5-7z'/%3E%3C/svg%3E");
             background-repeat: no-repeat;
             background-position: right 12px center;
+            background-color: #f3f7ff;
             padding-right: 30px !important;
         }
+
+        /* Category / hero label */
+        .category-label {
+            display: inline-block;
+            border: 1.5px solid #b8ccee;
+            color: #4d6fbe;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            padding: 5px 16px;
+            border-radius: 999px;
+        }
+
+        /* Section labels (like "TRY IT LIVE") */
+        .section-label {
+            font-size: 0.64rem;
+            font-weight: 700;
+            letter-spacing: 0.13em;
+            color: #8fa5d0;
+            text-transform: uppercase;
+        }
+
+        /* GitHub button */
+        .github-btn {
+            border: 1.5px solid #c0cfe8;
+            color: #0f1f5c;
+            background: rgba(255,255,255,0.85);
+            font-size: 0.78rem;
+            font-weight: 700;
+            padding: 8px 18px;
+            border-radius: 10px;
+            transition: all 0.15s;
+            text-decoration: none;
+            letter-spacing: 0.01em;
+        }
+        .github-btn:hover { border-color: #2563eb; color: #2563eb; background: #ffffff; }
 
         /* Loading stages */
         .stage { opacity: 0; transform: translateX(-8px); transition: all 0.4s ease; }
         .stage.active { opacity: 1; transform: translateX(0); }
-        .stage.done { opacity: 0.28; }
+        .stage.done { opacity: 0.35; }
 
         /* Scan bar */
         .scan-bar {
             height: 2px;
-            background: linear-gradient(90deg, transparent, #3b82f6, #818cf8, transparent);
+            border-radius: 99px;
+            background: linear-gradient(90deg, transparent, #2563eb, #6366f1, transparent);
             background-size: 200% 100%;
             animation: scan 2s linear infinite;
         }
@@ -143,96 +143,125 @@
             to   { opacity: 1; transform: translateY(0) }
         }
 
-        /* Risk classes */
-        .risk-HIGH   { background: rgba(239,68,68,0.14);  color: #fca5a5; border: 1px solid rgba(239,68,68,0.28); }
-        .risk-MEDIUM { background: rgba(245,158,11,0.14); color: #fde68a; border: 1px solid rgba(245,158,11,0.28); }
-        .risk-LOW    { background: rgba(34,197,94,0.14);  color: #86efac; border: 1px solid rgba(34,197,94,0.28); }
-        .risk-UNKNOWN{ background: rgba(148,163,184,0.1); color: #94a3b8; border: 1px solid rgba(148,163,184,0.2); }
+        /* Sort buttons */
+        .sort-btn {
+            background: rgba(255,255,255,0.85);
+            color: #6b7fa8;
+            border: 1.5px solid #cdd7ee;
+            transition: all 0.15s;
+        }
+        .sort-btn:hover { background: #ffffff; color: #0f1f5c; border-color: #2563eb; }
+        .sort-btn.active-sort { background: #2563eb; color: #ffffff; border-color: #2563eb; }
 
+        /* Trust bar */
+        .tbar-bg   { height: 5px; border-radius: 99px; background: #e6edf8; overflow: hidden; }
+        .tbar-fill { height: 100%; border-radius: 99px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
+
+        /* Pill */
         .pill {
             display: inline-flex;
             align-items: center;
             border-radius: 9999px;
             padding: 3px 10px;
             font-size: 0.68rem;
-            font-weight: 600;
+            font-weight: 700;
             letter-spacing: 0.02em;
         }
-
-        /* Sort buttons */
-        .sort-btn {
-            background: rgba(255,255,255,0.05);
-            color: rgba(180,210,255,0.5);
-            border: 1px solid rgba(255,255,255,0.08);
-            transition: all 0.15s;
-        }
-        .sort-btn:hover { background: rgba(255,255,255,0.09); color: rgba(180,210,255,0.85); border-color: rgba(255,255,255,0.14); }
-        .sort-btn.active-sort { background: rgba(59,130,246,0.18); color: #93c5fd; border-color: rgba(59,130,246,0.38); }
-
-        /* Trust bar */
-        .tbar-bg   { height: 5px; border-radius: 99px; background: rgba(255,255,255,0.08); overflow: hidden; }
-        .tbar-fill { height: 100%; border-radius: 99px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
 
         /* Scrollbar */
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(59,130,246,0.2); border-radius: 99px; }
+        ::-webkit-scrollbar-thumb { background: rgba(37,99,235,0.2); border-radius: 99px; }
     </style>
 </head>
 <body>
-    <div class="bg-orb bg-orb-1"></div>
-    <div class="bg-orb bg-orb-2"></div>
 
-    <div class="relative z-10 min-h-screen flex flex-col">
+    <!-- ── NAV ────────────────────────────────────────────────────────── -->
+    <nav class="nav-bar sticky top-0 z-50 px-6 py-3.5 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl flex items-center justify-center"
+                 style="background:linear-gradient(135deg,#2563eb,#4f46e5)">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                </svg>
+            </div>
+            <span class="text-base font-black" style="color:#0f1f5c">TrustCart</span>
+            <span style="border:1.5px solid #b8ccee;color:#4d6fbe;font-size:0.6rem;font-weight:700;letter-spacing:0.11em;padding:4px 12px;border-radius:999px">
+                AI FRAUD DETECTION
+            </span>
+        </div>
+        <a href="https://github.com/Msundara19/Trustcart" target="_blank" rel="noopener" class="github-btn">
+            View on GitHub →
+        </a>
+    </nav>
+
+    <div class="relative min-h-screen flex flex-col">
 
         <!-- ── HERO ───────────────────────────────────────────────────── -->
-        <div id="heroSection" class="flex flex-col items-center justify-center pt-14 pb-8 px-6 text-center">
+        <div class="flex flex-col items-center justify-center pt-16 pb-10 px-6 text-center">
 
-            <div class="logo-ring w-16 h-16 mb-5">
-                <div class="relative z-10 w-14 h-14 rounded-full flex items-center justify-center"
-                     style="background:linear-gradient(135deg,#3b82f6,#6366f1);box-shadow:0 0 0 4px rgba(59,130,246,0.12),0 8px 28px rgba(59,130,246,0.28)">
-                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                    </svg>
+            <span class="category-label mb-7">E-COMMERCE FRAUD DETECTION</span>
+
+            <h1 class="font-black leading-tight tracking-tight"
+                style="font-size:clamp(2.4rem,5vw,3.8rem);color:#0f1f5c">Smarter shopping.</h1>
+            <h1 class="font-black leading-tight tracking-tight mb-5"
+                style="font-size:clamp(2.4rem,5vw,3.8rem);color:#2563eb">Fewer scams.</h1>
+
+            <p class="text-sm sm:text-base max-w-lg leading-relaxed" style="color:#6b7fa8">
+                TrustCart scrapes Google Shopping and eBay, runs every listing through
+                an XGBoost classifier and Groq LLM, and surfaces fraud signals in real time —
+                so you always know what you're buying.
+            </p>
+
+            <!-- Stats bar -->
+            <div class="stat-card mt-10 w-full max-w-2xl overflow-hidden">
+                <div class="grid grid-cols-2 sm:grid-cols-4" style="divide-color:rgba(0,0,0,0.06)">
+                    <div class="px-6 py-5 text-center" style="border-right:1px solid rgba(0,0,0,0.06)">
+                        <p class="text-2xl font-black" style="color:#0f1f5c">94.5%</p>
+                        <p class="section-label mt-1.5">XGBoost F1</p>
+                    </div>
+                    <div class="px-6 py-5 text-center" style="border-right:1px solid rgba(0,0,0,0.06)">
+                        <p class="text-2xl font-black" style="color:#0f1f5c">14</p>
+                        <p class="section-label mt-1.5">Feature Inputs</p>
+                    </div>
+                    <div class="px-6 py-5 text-center" style="border-right:1px solid rgba(0,0,0,0.06)">
+                        <p class="text-2xl font-black" style="color:#0f1f5c">Groq</p>
+                        <p class="section-label mt-1.5">LLM Reasoning</p>
+                    </div>
+                    <div class="px-6 py-5 text-center">
+                        <p class="text-2xl font-black" style="color:#0f1f5c">2</p>
+                        <p class="section-label mt-1.5">Platforms Scanned</p>
+                    </div>
                 </div>
-            </div>
-
-            <h1 class="text-4xl sm:text-5xl font-black text-white tracking-tight">TrustCart</h1>
-            <p class="text-sm font-medium mt-2 tracking-wide" style="color:rgba(147,197,253,0.65)">AI-Powered E-Commerce Fraud Detection</p>
-
-            <div class="flex flex-wrap justify-center gap-2 mt-5">
-                <span class="pill" style="background:rgba(34,197,94,.1);color:#86efac;border:1px solid rgba(134,239,172,.18)">XGBoost 94.5% F1</span>
-                <span class="pill" style="background:rgba(99,102,241,.1);color:#c4b5fd;border:1px solid rgba(196,181,253,.18)">Groq LLM</span>
-                <span class="pill" style="background:rgba(14,165,233,.1);color:#7dd3fc;border:1px solid rgba(125,211,252,.18)">Duplicate Detection</span>
-                <span class="pill" style="background:rgba(249,115,22,.1);color:#fdba74;border:1px solid rgba(253,186,116,.18)">Real-time Analysis</span>
             </div>
         </div>
 
         <!-- ── SEARCH ─────────────────────────────────────────────────── -->
         <div class="flex justify-center px-4 sm:px-6 mb-8">
-            <div class="surface rounded-2xl p-4 sm:p-5 w-full max-w-4xl">
+            <div class="panel-card p-5 w-full max-w-4xl">
+                <p class="section-label mb-3">ANALYZE A PRODUCT</p>
                 <div class="flex flex-col sm:flex-row gap-3">
                     <input type="text" id="searchQuery"
                            placeholder="Search any product — iPhone 13, headphones, sneakers..."
                            class="field flex-1 px-4 py-3 rounded-xl text-sm font-medium"
                            onkeypress="if(event.key==='Enter') searchProducts()">
                     <select id="platformSelect" class="field px-4 py-3 rounded-xl text-sm font-semibold cursor-pointer">
-                        <option value="all"    style="background:#0c1630">All Platforms</option>
-                        <option value="google" style="background:#0c1630">Google Shopping</option>
-                        <option value="ebay"   style="background:#0c1630">eBay</option>
+                        <option value="all">All Platforms</option>
+                        <option value="google">Google Shopping</option>
+                        <option value="ebay">eBay</option>
                     </select>
                     <select id="numResults" class="field px-4 py-3 rounded-xl text-sm font-semibold cursor-pointer">
-                        <option value="10"  style="background:#0c1630">10 results</option>
-                        <option value="20" selected style="background:#0c1630">20 results</option>
-                        <option value="30"  style="background:#0c1630">30 results</option>
-                        <option value="50"  style="background:#0c1630">50 results</option>
+                        <option value="10">10 results</option>
+                        <option value="20" selected>20 results</option>
+                        <option value="30">30 results</option>
+                        <option value="50">50 results</option>
                     </select>
                     <input type="number" id="maxPrice" placeholder="Max $"
                            class="field w-24 px-4 py-3 rounded-xl text-sm font-semibold">
                     <button onclick="searchProducts()" id="searchBtn"
-                            class="px-6 py-3 text-white text-sm font-bold rounded-xl shadow-lg transition-all whitespace-nowrap disabled:opacity-50"
-                            style="background:linear-gradient(135deg,#3b82f6,#6366f1)">
+                            class="px-6 py-3 text-white text-sm font-bold rounded-xl whitespace-nowrap disabled:opacity-50 transition-opacity hover:opacity-90"
+                            style="background:#2563eb;box-shadow:0 4px 14px rgba(37,99,235,0.3)">
                         Analyze →
                     </button>
                 </div>
@@ -241,84 +270,84 @@
 
         <!-- ── LOADING ────────────────────────────────────────────────── -->
         <div id="loadingState" class="hidden flex justify-center px-4 sm:px-6 mb-8">
-            <div class="surface rounded-2xl p-7 w-full max-w-xl">
-                <div class="scan-bar rounded-full mb-6"></div>
+            <div class="panel-card p-7 w-full max-w-xl">
+                <div class="scan-bar mb-6"></div>
 
                 <div class="space-y-4" id="stageList">
                     <div class="stage flex items-center gap-3.5" id="stage-0">
                         <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-base"
-                             style="background:rgba(59,130,246,0.12)">🔍</div>
+                             style="background:rgba(37,99,235,0.1)">🔍</div>
                         <div class="flex-1 min-w-0">
-                            <p class="text-white text-sm font-semibold">Scraping listings</p>
-                            <p class="text-xs truncate" style="color:rgba(147,197,253,0.45)">Google Shopping + eBay via SerpAPI</p>
+                            <p class="text-sm font-semibold" style="color:#0f1f5c">Scraping listings</p>
+                            <p class="text-xs truncate" style="color:#9bacc8">Google Shopping + eBay via SerpAPI</p>
                         </div>
                         <div class="ml-auto shrink-0" id="stage-status-0"></div>
                     </div>
                     <div class="stage flex items-center gap-3.5" id="stage-1">
                         <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-base"
-                             style="background:rgba(99,102,241,0.12)">📊</div>
+                             style="background:rgba(99,102,241,0.1)">📊</div>
                         <div class="flex-1 min-w-0">
-                            <p class="text-white text-sm font-semibold">Statistical scoring</p>
-                            <p class="text-xs truncate" style="color:rgba(147,197,253,0.45)">Price percentile · outlier removal · seller trust</p>
+                            <p class="text-sm font-semibold" style="color:#0f1f5c">Statistical scoring</p>
+                            <p class="text-xs truncate" style="color:#9bacc8">Price percentile · outlier removal · seller trust</p>
                         </div>
                         <div class="ml-auto shrink-0" id="stage-status-1"></div>
                     </div>
                     <div class="stage flex items-center gap-3.5" id="stage-2">
                         <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-base"
-                             style="background:rgba(139,92,246,0.12)">⚡</div>
+                             style="background:rgba(139,92,246,0.1)">⚡</div>
                         <div class="flex-1 min-w-0">
-                            <p class="text-white text-sm font-semibold">XGBoost inference</p>
-                            <p class="text-xs truncate" style="color:rgba(147,197,253,0.45)">14-feature classifier · 94.5% F1</p>
+                            <p class="text-sm font-semibold" style="color:#0f1f5c">XGBoost inference</p>
+                            <p class="text-xs truncate" style="color:#9bacc8">14-feature classifier · 94.5% F1</p>
                         </div>
                         <div class="ml-auto shrink-0" id="stage-status-2"></div>
                     </div>
                     <div class="stage flex items-center gap-3.5" id="stage-3">
                         <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-base"
-                             style="background:rgba(6,182,212,0.12)">🤖</div>
+                             style="background:rgba(6,182,212,0.1)">🤖</div>
                         <div class="flex-1 min-w-0">
-                            <p class="text-white text-sm font-semibold">Groq LLM reasoning</p>
-                            <p class="text-xs truncate" style="color:rgba(147,197,253,0.45)">Natural language fraud explanation · top 5 risky items</p>
+                            <p class="text-sm font-semibold" style="color:#0f1f5c">Groq LLM reasoning</p>
+                            <p class="text-xs truncate" style="color:#9bacc8">Natural language fraud explanation · top 5 risky items</p>
                         </div>
                         <div class="ml-auto shrink-0" id="stage-status-3"></div>
                     </div>
                     <div class="stage flex items-center gap-3.5" id="stage-4">
                         <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-base"
-                             style="background:rgba(167,139,250,0.12)">🔁</div>
+                             style="background:rgba(167,139,250,0.1)">🔁</div>
                         <div class="flex-1 min-w-0">
-                            <p class="text-white text-sm font-semibold">Duplicate detection</p>
-                            <p class="text-xs truncate" style="color:rgba(147,197,253,0.45)">TF-IDF cosine similarity · cross-platform pairs</p>
+                            <p class="text-sm font-semibold" style="color:#0f1f5c">Duplicate detection</p>
+                            <p class="text-xs truncate" style="color:#9bacc8">TF-IDF cosine similarity · cross-platform pairs</p>
                         </div>
                         <div class="ml-auto shrink-0" id="stage-status-4"></div>
                     </div>
                 </div>
 
                 <div class="flex justify-center gap-2 mt-6">
-                    <span class="dot w-1.5 h-1.5 bg-blue-400"></span>
-                    <span class="dot w-1.5 h-1.5 bg-indigo-400"></span>
-                    <span class="dot w-1.5 h-1.5 bg-sky-400"></span>
+                    <span class="dot w-1.5 h-1.5 rounded-full" style="background:#2563eb"></span>
+                    <span class="dot w-1.5 h-1.5 rounded-full" style="background:#4f46e5"></span>
+                    <span class="dot w-1.5 h-1.5 rounded-full" style="background:#0ea5e9"></span>
                 </div>
             </div>
         </div>
 
         <!-- ── EMPTY STATE ────────────────────────────────────────────── -->
         <div id="emptyState" class="flex flex-col items-center py-10 text-center px-6">
-            <p class="text-sm font-medium" style="color:rgba(147,197,253,0.35)">Enter a product above to start real-time fraud analysis</p>
+            <p class="text-sm font-semibold" style="color:#b0c0da">Enter a product above to start real-time fraud analysis</p>
         </div>
 
         <!-- ── SORT BAR ───────────────────────────────────────────────── -->
         <div id="sortBar" class="hidden px-4 sm:px-6 mb-4">
             <div class="flex flex-wrap items-center gap-2 max-w-7xl mx-auto">
-                <span class="text-xs font-semibold uppercase tracking-wider mr-1" style="color:rgba(255,255,255,0.25)">Sort</span>
-                <button id="btn-risk-asc"   onclick="setSort('risk-asc')"   class="sort-btn active-sort px-4 py-1.5 rounded-full text-xs font-semibold">Safest first</button>
-                <button id="btn-risk-desc"  onclick="setSort('risk-desc')"  class="sort-btn px-4 py-1.5 rounded-full text-xs font-semibold">Riskiest first</button>
-                <button id="btn-price-asc"  onclick="setSort('price-asc')"  class="sort-btn px-4 py-1.5 rounded-full text-xs font-semibold">Price: Low → High</button>
-                <button id="btn-price-desc" onclick="setSort('price-desc')" class="sort-btn px-4 py-1.5 rounded-full text-xs font-semibold">Price: High → Low</button>
+                <span class="section-label mr-1">Sort</span>
+                <button id="btn-risk-asc"   onclick="setSort('risk-asc')"   class="sort-btn active-sort px-4 py-1.5 rounded-full text-xs font-bold">Safest first</button>
+                <button id="btn-risk-desc"  onclick="setSort('risk-desc')"  class="sort-btn px-4 py-1.5 rounded-full text-xs font-bold">Riskiest first</button>
+                <button id="btn-price-asc"  onclick="setSort('price-asc')"  class="sort-btn px-4 py-1.5 rounded-full text-xs font-bold">Price: Low → High</button>
+                <button id="btn-price-desc" onclick="setSort('price-desc')" class="sort-btn px-4 py-1.5 rounded-full text-xs font-bold">Price: High → Low</button>
             </div>
         </div>
 
         <!-- ── SUMMARY BAR ────────────────────────────────────────────── -->
         <div id="summaryBar" class="hidden px-4 sm:px-6 mb-6 flex justify-center">
-            <div id="summaryContent" class="surface rounded-2xl p-5 sm:p-6 w-full max-w-7xl"></div>
+            <div id="summaryContent" class="panel-card p-5 sm:p-6 w-full max-w-7xl"></div>
         </div>
 
         <!-- ── RESULTS ────────────────────────────────────────────────── -->
