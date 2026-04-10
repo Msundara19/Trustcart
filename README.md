@@ -16,6 +16,59 @@
 
 ---
 
+## Why I Built This
+
+Online shopping fraud isn't a website problem — it's a **listing problem**. A legitimate site like eBay or Google Shopping can host thousands of fraudulent listings side by side with genuine ones. Existing tools don't solve this.
+
+In July 2025, Mozilla shut down **Fakespot** — the closest tool to what I wanted. What remained were tools that either check whether a *website* is trustworthy (ScamAdviser, F-Secure) or analyse *reviews* for fakery (ReviewMeta) — neither of which tells you whether the specific iPhone listing you're about to click is a scam.
+
+I wanted a tool that answers one question: **is this particular listing safe to buy from?** TrustCart is that tool.
+
+---
+
+## What Already Exists — and Where It Falls Short
+
+| Tool | What it checks | Platform coverage | Still active? |
+|---|---|---|---|
+| **Fakespot** | Fake reviews | Amazon, eBay, Walmart | ❌ Shut down Jul 2025 |
+| **ReviewMeta** | Fake reviews | Amazon only | ✅ |
+| **Camelizer** | Price history / fake discounts | Amazon only | ✅ |
+| **Honey** | Price comparison, coupons | Multi-platform | ✅ |
+| **ScamAdviser** | Website reputation | Site-level only | ✅ |
+| **F-Secure** | Website safety | Site-level only | ✅ |
+| **Counterfake** | Counterfeit sellers | Enterprise SaaS | ✅ |
+
+Every buyer-facing tool on this list has at least one of these fundamental limitations:
+
+- **Site-level, not listing-level** — ScamAdviser tells you eBay.com is safe. It says nothing about the seller charging $49 for an "iPhone 15 Pro" in the listings.
+- **Single platform** — ReviewMeta and Camelizer only cover Amazon, where most complaints actually originate, but leave eBay and Google Shopping completely unchecked.
+- **Reviews only** — A listing can have zero reviews and still be fraudulent. Review-based tools are blind to brand-new scam listings.
+- **No ML risk scoring** — Price history trackers and coupon finders are savings tools, not fraud detectors. None of them run a trained classifier against listing features.
+
+---
+
+## Why TrustCart Is Different
+
+TrustCart is the only consumer-facing tool that operates at the **individual listing level** with a full ML pipeline — not review sentiment, not site reputation, not price history alone.
+
+**Three signal types, combined:**
+
+| Signal | How TrustCart uses it | What others do |
+|---|---|---|
+| **Statistical** | Price percentile rank, outlier scoring, seller trust weights | Camelizer does price history (Amazon only) |
+| **ML Classification** | XGBoost on 17 features — seller rating, sales volume, price percentile, condition, platform | Nobody else applies a trained classifier to individual listings |
+| **LLM Reasoning** | Groq/LLaMA generates plain-English red flags and a buy recommendation | Fakespot had NLP for reviews; no tool explains *listing-level* fraud in plain English |
+
+**What no competitor does at all:**
+
+- **Cross-platform duplicate detection** — TF-IDF cosine similarity flags when the same listing appears across Google Shopping and eBay at different prices, exposing arbitrage scams and price manipulation.
+- **Calibrated trust scoring** — The LLM verdict gates the safety score. An AVOID recommendation hard-caps the score at 20%, preventing the model from contradicting itself.
+- **Multi-platform scraping in one query** — One search returns ranked, risk-scored results from both Google Shopping and eBay simultaneously.
+
+The gap Fakespot's shutdown left is real. TrustCart fills it — not for review analysis, but for the harder problem of per-listing fraud risk at the point of search.
+
+---
+
 ## How It Works
 
 A search query triggers a four-stage pipeline:
